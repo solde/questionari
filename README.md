@@ -29,7 +29,7 @@ El botón de la paleta (barra superior) ofrece el diseño por defecto y 21 esque
 `themes.css` y `themes.js` se generan con `python3 tools/gen-themes.py`, que además ajusta los colores para cumplir contraste WCAG AA; para añadir un tema, añade su paleta en ese script y vuelve a ejecutarlo.
 
 ## Música
-Durante la partida suena música de concurso sintetizada en el navegador (sin archivos de audio). Cada jugador puede silenciarla con el botón de altavoz de la barra superior; se recuerda en ese dispositivo.
+Durante la partida suena música de concurso sintetizada en el navegador (sin archivos de audio). Cada jugador ajusta el volumen con el control deslizante de la barra superior (el altavoz silencia y restaura el último volumen); se recuerda en ese dispositivo.
 
 ## Idiomas
 Interfaz en catalán (por defecto), castellano, gallego, euskera, inglés, francés, alemán, italiano, polaco, ruso, árabe (RTL), hindi, chino simplificado, japonés y klingon (`tlhIngan Hol`, romanización estándar; traducción de mejor esfuerzo). Selector en la barra superior; la elección se guarda en el navegador. Las traducciones están en `i18n.js` y `i18n-extra.js`. El host y los jugadores pueden usar idiomas distintos. El contenido de los cuestionarios no se traduce.

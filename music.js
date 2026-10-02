@@ -3,12 +3,18 @@
 'use strict';
 
 const music = (() => {
-  const KEY = 'quizsolde.music';
+  const KEY = 'quizsolde.volume', OLD_KEY = 'quizsolde.music';   // OLD_KEY: preferencia antigua (solo silenciar)
   const BPM = { lobby: 112, question: 132, reveal: 104, final: 124 };   // tempo por escena
-  const LEVEL = 0.16;                                                   // volumen general (suave)
+  const MAX_GAIN = 0.64;                                                // ganancia con el volumen al 100 % (al 50 % = 0,16, como antes)
   let ctx = null, master = null, noiseBuf = null, mode = 'off', step = 0, next = 0, timer = null;
-  let muted = false;
-  try { muted = localStorage.getItem(KEY) === '0'; } catch { }
+  let volume = 0.5, lastVolume = 0.5;                                   // 0 = silenciado
+  try {
+    const v = parseFloat(localStorage.getItem(KEY));
+    if (!isNaN(v)) volume = Math.min(1, Math.max(0, v));
+    else if (localStorage.getItem(OLD_KEY) === '0') volume = 0;
+    if (volume > 0) lastVolume = volume;
+  } catch { }
+  const isMuted = () => volume === 0;
 
   const hz = m => 440 * Math.pow(2, (m - 69) / 12);
 
@@ -89,8 +95,8 @@ const music = (() => {
 
   function applyGain() {
     if (!ctx) return;
-    const on = !muted && mode !== 'off' && !document.hidden;
-    master.gain.setTargetAtTime(on ? LEVEL : 0, ctx.currentTime, 0.05);
+    const on = !isMuted() && mode !== 'off' && !document.hidden;
+    master.gain.setTargetAtTime(on ? MAX_GAIN * volume * volume : 0, ctx.currentTime, 0.05);   // curva cuadrática: el volumen se percibe más lineal
   }
 
   function stopLoop() { clearInterval(timer); timer = null; }
@@ -99,7 +105,7 @@ const music = (() => {
   function set(m, opts = {}) {
     if (m === mode && timer) return;
     mode = m; step = 0; stopLoop();
-    if (m === 'off' || muted) { applyGain(); return; }
+    if (m === 'off' || isMuted()) { applyGain(); return; }
     if (!ensure()) return;
     next = ctx.currentTime + 0.06 + (opts.delay || 0);
     timer = setInterval(tick, 30);
@@ -110,7 +116,7 @@ const music = (() => {
   function unlock() { if (!ensure()) return; if (ctx.state === 'suspended') ctx.resume(); applyGain(); }
 
   function sting(kind) {
-    if (muted || !ensure() || ctx.state !== 'running') return;
+    if (isMuted() || !ensure() || ctx.state !== 'running') return;
     const t = ctx.currentTime + 0.03;
     if (kind === 'good') [72, 76, 79, 84].forEach((n, i) => { osc('triangle', hz(n), t + i * 0.07, 0.45, 0.45); osc('square', hz(n), t + i * 0.07, 0.2, 0.05); });
     else if (kind === 'bad') { osc('sawtooth', hz(55), t, 0.32, 0.18); osc('sawtooth', hz(51), t + 0.26, 0.55, 0.18); }
@@ -118,20 +124,26 @@ const music = (() => {
   }
 
   function fanfare() {
-    if (muted || !ensure() || ctx.state !== 'running') return;
+    if (isMuted() || !ensure() || ctx.state !== 'running') return;
     const t = ctx.currentTime + 0.03;
     [60, 64, 67, 72].forEach((n, i) => osc('triangle', hz(n), t + i * 0.11, 0.35, 0.45));
     [60, 64, 67, 72, 76].forEach(n => { osc('triangle', hz(n), t + 0.5, 1.1, 0.3); osc('square', hz(n), t + 0.5, 0.6, 0.04); });
   }
 
-  function toggle() {
-    muted = !muted;
-    try { localStorage.setItem(KEY, muted ? '0' : '1'); } catch { }
-    if (muted) { stopLoop(); applyGain(); }
-    else { const m = mode; mode = 'off'; unlock(); set(m); }
-    return muted;
+  /** Cambia el volumen (0..1). Con 0 se silencia; al subirlo desde 0 la música vuelve a sonar. */
+  function setVolume(v) {
+    const was0 = isMuted();
+    volume = Math.min(1, Math.max(0, +v || 0));
+    if (volume > 0) lastVolume = volume;
+    try { localStorage.setItem(KEY, String(volume)); } catch { }
+    if (isMuted()) { stopLoop(); applyGain(); }
+    else if (was0) { const m = mode; mode = 'off'; unlock(); set(m); }
+    else { unlock(); applyGain(); }
+    return volume;
   }
+  /** Silencia o restaura el último volumen. Devuelve true si queda silenciado. */
+  function toggle() { setVolume(isMuted() ? lastVolume : 0); return isMuted(); }
 
   document.addEventListener('visibilitychange', applyGain);
-  return { set, unlock, sting, fanfare, toggle, isMuted: () => muted };
+  return { set, unlock, sting, fanfare, toggle, setVolume, getVolume: () => volume, isMuted };
 })();

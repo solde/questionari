@@ -308,3 +308,23 @@ const THEME_I18N = {
   tlh: { 'theme.pick': `wov qIj nguv yIwIv`, 'theme.default': `motlh`, 'theme.hc': `wov law'`, 'theme.dark': `qIj`, 'theme.light': `wov` },
 };
 Object.keys(THEME_I18N).forEach(l => Object.assign(I18N[l], THEME_I18N[l]));
+
+/* volumen de la música */
+const VOL_I18N = {
+  ca: `Volum de la música`,
+  es: `Volumen de la música`,
+  gl: `Volume da música`,
+  eu: `Musikaren bolumena`,
+  en: `Music volume`,
+  fr: `Volume de la musique`,
+  de: `Musiklautstärke`,
+  it: `Volume della musica`,
+  pl: `Głośność muzyki`,
+  ru: `Громкость музыки`,
+  ar: `مستوى صوت الموسيقى`,
+  hi: `संगीत की आवाज़`,
+  zh: `音乐音量`,
+  ja: `音楽の音量`,
+  tlh: `QoQ ghogh`,
+};
+Object.keys(VOL_I18N).forEach(l => { I18N[l]['music.vol'] = VOL_I18N[l]; });

@@ -284,10 +284,13 @@ matchMedia('(prefers-color-scheme: dark)').addEventListener('change', syncThemeI
 
 /* música de concurso: una pista por escena; el botón de la barra la silencia */
 function syncMusicIcon() {
-  const m = music.isMuted();
-  $('#music-icon').setAttribute('href', m ? '#i-volume-x' : '#i-volume');
+  const m = music.isMuted(), v = Math.round(music.getVolume() * 100), r = $('#vol-range');
+  $('#music-icon').setAttribute('href', m ? '#i-volume-x' : v < 50 ? '#i-volume-1' : '#i-volume');
   $('#music-toggle').setAttribute('aria-pressed', String(!m));
+  r.value = v; r.style.setProperty('--pct', v + '%');
+  r.setAttribute('aria-valuetext', v + '%');
 }
+$('#vol-range').addEventListener('input', e => { music.setVolume(e.target.value / 100); syncMusicIcon(); });
 const MUSIC_SCENE = { hostLobby: 'lobby', clientWait: 'lobby', hostTitle: 'lobby', clientTitle: 'lobby', hostQuestion: 'question', clientQuestion: 'question', hostReveal: 'reveal', clientReveal: 'reveal', hostFinal: 'final', clientFinal: 'final' };
 function updateMusic() {
   const scene = MUSIC_SCENE[ui.view] || 'off';
