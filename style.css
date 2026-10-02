@@ -512,3 +512,6 @@ input[type=checkbox] { accent-color: var(--brand); }
 .scheme-panel[hidden] { display: none; }
 .scheme-panel .mode-btn { width: 100%; }
 .scheme-panel .scheme-list { position: static; width: auto; max-height: min(58vh, 460px); margin: 8px 0 0; padding: 0; border: 0; box-shadow: none; animation: none; background: transparent; }
+
+.opt-row .dot.num { display: grid; place-items: center; background: var(--grad); color: var(--on-brand); font: 700 .8rem var(--font-ui); }
+.hint { margin: 0 0 var(--s2); }

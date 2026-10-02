@@ -49,6 +49,10 @@ const store = {
 const blankQuestion = () => ({ id: uid(), text: '', image: null, options: ['', '', '', ''], correct: 0, time: 20, points: 'standard', explanation: '' });
 const blankSeparator = () => ({ id: uid(), type: 'title', text: '', subtitle: '', time: 4 });
 const isTitle = q => q.type === 'title';
+const isOrder = q => q.type === 'order';
+const isPoll = q => q.type === 'poll';
+const gradable = q => !isTitle(q) && !isPoll(q);            // las encuestas y los separadores no puntúan
+const maxOpts = q => isOrder(q) ? 6 : 4;
 const realCount = quiz => quiz.questions.filter(q => !isTitle(q)).length;
 /** Número (1..N) de la pregunta en la posición i, sin contar separadores. */
 const qNumber = (quiz, i) => quiz.questions.slice(0, i + 1).filter(q => !isTitle(q)).length;
@@ -66,16 +70,21 @@ function normalizeQuiz(raw) {
     }
     if (!q || typeof q.text !== 'string' || !q.text.trim()) throw new Error(t('imp.qtext', { n }));
     if (!Array.isArray(q.options)) throw new Error(t('imp.qopts', { n }));
-    const options = q.options.slice(0, 4).map(o => String(o ?? ''));
-    if (options.filter(o => o.trim()).length < 2) throw new Error(t('imp.min2', { n }));
-    const correct = Number.isInteger(q.correct) ? q.correct : 0;
-    if (correct < 0 || correct >= options.length || !options[correct].trim()) throw new Error(t('imp.correct', { n }));
+    const type = q.type === 'order' ? 'order' : q.type === 'poll' ? 'poll' : 'choice';
+    let options = q.options.slice(0, type === 'order' ? 6 : 4).map(o => String(o ?? ''));
+    if (type !== 'choice') options = options.map(o => o.trim()).filter(Boolean);       // ordenar y encuesta: sin huecos
+    if (options.filter(o => o.trim()).length < 2) throw new Error(t(type === 'order' ? 'imp.order' : 'imp.min2', { n }));
+    let correct = 0;
+    if (type === 'choice') {
+      correct = Number.isInteger(q.correct) ? q.correct : 0;
+      if (correct < 0 || correct >= options.length || !options[correct].trim()) throw new Error(t('imp.correct', { n }));
+    }
     const image = typeof q.image === 'string' && /^(data:image\/|https?:\/\/)/i.test(q.image) ? q.image : null;
     const time = clamp(Math.round(Number(q.time)) || 20, 5, 120);
-    const points = ['standard', 'double', 'none'].includes(q.points) ? q.points : 'standard';
+    const points = type === 'poll' ? 'none' : ['standard', 'double', 'none'].includes(q.points) ? q.points : 'standard';
     while (options.length < 2) options.push('');
     const explanation = typeof q.explanation === 'string' ? q.explanation.trim().slice(0, 500) : '';
-    return { id: uid(), text: q.text.trim(), image, options, correct, time, points, explanation };
+    return { id: uid(), ...(type !== 'choice' ? { type } : {}), text: q.text.trim(), image, options, correct, time, points, explanation };
   });
   if (!questions.some(q => !isTitle(q))) throw new Error(t('imp.onlysep'));
   return { id: uid(), title: String(raw.title || t('imp.default')).slice(0, 120), description: String(raw.description || '').slice(0, 500), questions };
@@ -85,9 +94,10 @@ function exportable(quiz) {
   return {
     format: 'questionari', version: 1, title: quiz.title, description: quiz.description,
     questions: quiz.questions.map(q => isTitle(q) ? { type: 'title', text: q.text, subtitle: q.subtitle || '', time: q.time } : ({
+      ...(isOrder(q) || isPoll(q) ? { type: q.type } : {}),
       text: q.text, image: q.image || null,
-      options: q.options.filter((o, i) => o.trim() || i === q.correct),
-      correct: q.correct, time: q.time, points: q.points,
+      options: isOrder(q) || isPoll(q) ? q.options.filter(o => o.trim()) : q.options.filter((o, i) => o.trim() || i === q.correct),
+      ...(isOrder(q) || isPoll(q) ? {} : { correct: q.correct }), time: q.time, points: isPoll(q) ? 'none' : q.points,
       ...(q.explanation ? { explanation: q.explanation } : {}),
     })),
   };
@@ -213,14 +223,78 @@ document.addEventListener('click', e => { if (!langList.hidden && !e.target.clos
 function templateQuiz() {
   const sep = (SAMPLES[LANG] || SAMPLES.ca).r1;
   return {
-    _help: 'questions: array of items. Question: text, options (2-4), correct (index of the right option, 0 = first), time (5-120 s), points (standard | double | none), image (null, https://... or data:image/...), explanation (optional). Separator: { "type": "title", "text", "subtitle", "time" (2-30 s) }.',
+    _help: 'questions: array of items. Types: (default) multiple choice { text, options (2-4), correct (index of the right option, 0 = first), time (5-120 s), points (standard | double | none), image (null, https://... or data:image/...), explanation (optional) } · "order": options (2-6) listed in the CORRECT order, they are shuffled when played · "poll": options (2-4), no correct answer, no points · "title" (separator): { text, subtitle, time (2-30 s) }.',
     format: 'questionari', version: 1,
     title: t('ed.title'), description: t('ed.desc'),
     questions: [
       { type: 'title', text: sep[0], subtitle: sep[1], time: 4 },
       { text: t('ed.q.ph'), image: null, options: [1, 2, 3, 4].map(n => t('ed.opt.ph', { n })), correct: 1, time: 20, points: 'standard', explanation: t('ed.expl.ph') },
+      { type: 'order', text: t('type.order') + ' — ' + t('ed.q.ph'), image: null, options: [1, 2, 3].map(n => t('ed.item', { n })), time: 30, points: 'standard', explanation: t('ed.expl.ph') },
+      { type: 'poll', text: t('type.poll') + ' — ' + t('ed.q.ph'), image: null, options: [1, 2, 3].map(n => t('ed.opt.ph', { n })), time: 20 },
     ],
   };
+}
+
+/* ───────────── CSV: lectura y plantilla ─────────────
+ * Columnas: type,text,option1..option6,correct,time,points,image,explanation,subtitle
+ *  type: (vacío = respuesta múltiple) | order | poll | title.  correct: nº de opción (1 = primera) o letra A-D.
+ *  Para "order" las opciones van en el orden CORRECTO. Delimitador: coma, punto y coma o tabulador. */
+const CSV_COLS = ['type', 'text', 'option1', 'option2', 'option3', 'option4', 'option5', 'option6', 'correct', 'time', 'points', 'image', 'explanation', 'subtitle'];
+function parseCsv(text) {
+  text = text.replace(/^\ufeff/, '');
+  const first = text.split(/\r?\n/, 1)[0];
+  const count = ch => { let n = 0, q = false; for (const c of first) { if (c === '"') q = !q; else if (!q && c === ch) n++; } return n; };
+  const delim = [',', ';', '\t'].map(d => [d, count(d)]).sort((x, y) => y[1] - x[1])[0];
+  const D = delim[1] ? delim[0] : ',';
+  const rows = []; let row = [], f = '', q = false;
+  const endField = () => { row.push(f); f = ''; };
+  const endRow = () => { endField(); if (row.some(c => c.trim() !== '')) rows.push(row); row = []; };
+  for (let i = 0; i < text.length; i++) {
+    const c = text[i];
+    if (q) { if (c === '"') { if (text[i + 1] === '"') { f += '"'; i++; } else q = false; } else f += c; }
+    else if (c === '"' && f === '') q = true;
+    else if (c === D) endField();
+    else if (c === '\n') endRow();
+    else if (c !== '\r') f += c;
+  }
+  if (f !== '' || row.length) endRow();
+  return rows;
+}
+/** Convierte un CSV al mismo formato que el JSON (después pasa por normalizeQuiz). */
+function csvToRaw(text, name) {
+  const rows = parseCsv(text);
+  if (!rows.length) throw new Error(t('imp.csv.empty'));
+  const head = rows[0].map(c => c.trim().toLowerCase());
+  const hasHeader = head.includes('text') && head.includes('option1');
+  const idx = {}; (hasHeader ? head : CSV_COLS).forEach((c, k) => { idx[c] = k; });
+  const body = hasHeader ? rows.slice(1) : rows;
+  if (!body.length) throw new Error(t('imp.csv.empty'));
+  const questions = body.map((r, k) => {
+    const get = k2 => (idx[k2] != null ? String(r[idx[k2]] ?? '').trim() : '');
+    const type = get('type').toLowerCase();
+    if (['title', 'separator', 'separador'].includes(type)) return { type: 'title', text: get('text'), subtitle: get('subtitle'), time: parseInt(get('time'), 10) || 4 };
+    const options = [1, 2, 3, 4, 5, 6].map(n => get('option' + n));
+    while (options.length && options[options.length - 1] === '') options.pop();
+    const cv = get('correct');
+    let correct;
+    if (/^\d+$/.test(cv)) correct = parseInt(cv, 10) - 1;
+    else if (/^[a-f]$/i.test(cv)) correct = cv.toUpperCase().charCodeAt(0) - 65;
+    if (correct === undefined && type !== 'order' && type !== 'poll') throw new Error(t('imp.correct', { n: k + 1 }));
+    return { ...(type === 'order' || type === 'poll' ? { type } : {}), text: get('text'), options, correct, time: parseInt(get('time'), 10) || undefined, points: get('points').toLowerCase() || undefined, image: get('image') || null, explanation: get('explanation') };
+  });
+  return { title: name || undefined, questions };
+}
+/** Plantilla CSV: las mismas filas de ejemplo que la plantilla JSON. */
+function csvTemplate() {
+  const tq = templateQuiz();
+  const lines = [CSV_COLS.join(',')];
+  tq.questions.forEach(q => {
+    const o = q.options || [];
+    const correct = q.type === 'order' || q.type === 'poll' || q.type === 'title' ? '' : q.correct + 1;
+    const cells = [q.type || '', q.text, ...[0, 1, 2, 3, 4, 5].map(k => o[k] || ''), correct, q.time ?? '', q.type === 'title' || q.type === 'poll' ? '' : (q.points || ''), q.image || '', q.explanation || '', q.subtitle || ''];
+    lines.push(cells.map(csvCell).join(','));
+  });
+  return '\ufeff' + lines.join('\r\n');
 }
 
 /** Cuestionario de ejemplo en el idioma actual. */
@@ -351,9 +425,10 @@ views.library = () => `
     <h1>${t('lib.title')}</h1>
     <div class="row">
       <button class="btn" data-act="new">${ic('plus')} ${t('lib.new')}</button>
-      <label class="btn sec" tabindex="0">${ic('download')} ${t('lib.import')}<input type="file" id="import-file" accept=".json,application/json" multiple hidden></label>
+      <label class="btn sec" tabindex="0">${ic('download')} ${t('lib.import')}<input type="file" id="import-file" accept=".json,.csv,application/json,text/csv" multiple hidden></label>
       <button class="btn sec" data-act="toggle-paste">${ic('clipboard')} ${t('lib.paste')}</button>
       <button class="btn sec" data-act="template">${ic('file')} ${t('lib.template')}</button>
+      <button class="btn sec" data-act="template-csv">${ic('file')} ${t('lib.template.csv')}</button>
       ${ui.quizzes.length ? `<button class="btn sec" data-act="export-all">${ic('upload')} ${t('lib.exportall')}</button>` : ''}
     </div>
   </div>
@@ -398,6 +473,7 @@ views.editor = () => {
   <div class="row"><button class="btn big" data-act="add-q">${ic('plus')} ${t('ed.addq')}</button><button class="btn big sec" data-act="add-sep">${ic('heading')} ${t('ed.addsep')}</button><button class="btn big ok" data-act="save">${ic('save')} ${t('common.save')}</button></div>`;
 };
 
+const qType = q => isOrder(q) ? 'order' : isPoll(q) ? 'poll' : 'choice';
 function editorQuestion(q, i, total, quiz) {
   const head = (label) => `<div class="q-head"><strong>${label}</strong>
       <div class="row">
@@ -414,9 +490,28 @@ function editorQuestion(q, i, total, quiz) {
     <label class="f">${t('ed.sep.sub')}</label><input type="text" data-bind="q.subtitle" data-i="${i}" maxlength="200" value="${esc(q.subtitle || '')}">
     <label class="f">${t('ed.sep.dur')}</label><select data-bind="q.time" data-i="${i}">${secs([2, 3, 4, 5, 6, 8, 10, 15, 20, 30])}</select>
   </div>`;
+  const qt = qType(q), typeSel = `<label class="f" for="qtype-${i}">${t('type.label')}</label><select id="qtype-${i}" data-bind="q.type" data-i="${i}">
+      ${['choice', 'order', 'poll'].map(v => `<option value="${v}" ${qt === v ? 'selected' : ''}>${t('type.' + v)}</option>`).join('')}</select>`;
+  const optRows = qt === 'order'
+    ? q.options.map((o, j) => `
+      <div class="opt-row">
+        <span class="dot num">${j + 1}</span>
+        <input type="text" data-bind="q.opt" data-i="${i}" data-j="${j}" value="${esc(o)}" maxlength="120" placeholder="${esc(t('ed.item', { n: j + 1 }))}">
+        <button class="btn sm sec" data-act="item-up" data-i="${i}" data-j="${j}" ${j === 0 ? 'disabled' : ''} aria-label="${esc(t('ed.up'))}" title="${esc(t('ed.up'))}">${ic('up')}</button>
+        <button class="btn sm sec" data-act="item-down" data-i="${i}" data-j="${j}" ${j === q.options.length - 1 ? 'disabled' : ''} aria-label="${esc(t('ed.down'))}" title="${esc(t('ed.down'))}">${ic('down')}</button>
+        ${q.options.length > 2 ? `<button class="btn sm danger" data-act="opt-del" data-i="${i}" data-j="${j}" aria-label="${esc(t('ed.opt.del'))}" title="${esc(t('ed.opt.del'))}">${ic('x')}</button>` : ''}
+      </div>`).join('')
+    : q.options.map((o, j) => `
+      <div class="opt-row">
+        <span class="dot" style="background:var(--c${j})"></span>
+        ${qt === 'choice' ? `<input type="radio" name="correct-${i}" data-bind="q.correct" data-i="${i}" data-j="${j}" ${q.correct === j ? 'checked' : ''} title="${esc(t('ed.opt.correct'))}" aria-label="${esc(t('ed.opt.correct'))}">` : ''}
+        <input type="text" data-bind="q.opt" data-i="${i}" data-j="${j}" value="${esc(o)}" maxlength="120" placeholder="${esc(t('ed.opt.ph', { n: j + 1 }))}">
+        ${q.options.length > 2 ? `<button class="btn sm danger" data-act="opt-del" data-i="${i}" data-j="${j}" aria-label="${esc(t('ed.opt.del'))}" title="${esc(t('ed.opt.del'))}">${ic('x')}</button>` : ''}
+      </div>`).join('');
   return `
   <div class="q-card" data-qi="${i}">
     ${head(ic('help') + ' ' + t('ed.q', { n: qNumber(quiz, i) }))}
+    ${typeSel}
     <textarea data-bind="q.text" data-i="${i}" placeholder="${esc(t('ed.q.ph'))}" maxlength="300">${esc(q.text)}</textarea>
     <label class="f">${t('ed.img')}</label>
     ${q.image ? `<img class="img-prev" src="${esc(q.image)}" alt="">
@@ -426,23 +521,18 @@ function editorQuestion(q, i, total, quiz) {
         <input type="text" data-imgurl="${i}" placeholder="${esc(t('ed.img.url.ph'))}" style="flex:1;min-width:200px">
         <button class="btn sm" data-act="img-url" data-i="${i}">${t('ed.img.url.btn')}</button>
       </div>`}
-    <label class="f">${t('ed.opts')}</label>
-    ${q.options.map((o, j) => `
-      <div class="opt-row">
-        <span class="dot" style="background:var(--c${j})"></span>
-        <input type="radio" name="correct-${i}" data-bind="q.correct" data-i="${i}" data-j="${j}" ${q.correct === j ? 'checked' : ''} title="${esc(t('ed.opt.correct'))}" aria-label="${esc(t('ed.opt.correct'))}">
-        <input type="text" data-bind="q.opt" data-i="${i}" data-j="${j}" value="${esc(o)}" maxlength="120" placeholder="${esc(t('ed.opt.ph', { n: j + 1 }))}">
-        ${q.options.length > 2 ? `<button class="btn sm danger" data-act="opt-del" data-i="${i}" data-j="${j}" aria-label="${esc(t('ed.opt.del'))}" title="${esc(t('ed.opt.del'))}">${ic('x')}</button>` : ''}
-      </div>`).join('')}
-    ${q.options.length < 4 ? `<button class="btn sm sec" data-act="opt-add" data-i="${i}">${ic('plus')} ${t('ed.opt.add')}</button>` : ''}
+    <label class="f">${qt === 'order' ? t('type.order') : t('ed.opts')}</label>
+    ${qt === 'order' ? `<p class="hint">${t('ed.order.hint')}</p>` : qt === 'poll' ? `<p class="hint">${t('ed.poll.hint')}</p>` : ''}
+    ${optRows}
+    ${q.options.length < maxOpts(q) ? `<button class="btn sm sec" data-act="opt-add" data-i="${i}">${ic('plus')} ${qt === 'order' ? t('ed.item.add') : t('ed.opt.add')}</button>` : ''}
     <label class="f">${t('ed.expl')}</label>
     <textarea data-bind="q.expl" data-i="${i}" rows="2" maxlength="500" placeholder="${esc(t('ed.expl.ph'))}">${esc(q.explanation || '')}</textarea>
     <div class="opts-meta">
       <div><label class="f">${t('ed.time')}</label><select data-bind="q.time" data-i="${i}">${secs([5, 10, 15, 20, 30, 45, 60, 90, 120])}</select></div>
-      <div><label class="f">${t('ed.points')}</label><select data-bind="q.points" data-i="${i}">
+      ${qt === 'poll' ? '' : `<div><label class="f">${t('ed.points')}</label><select data-bind="q.points" data-i="${i}">
         <option value="standard" ${q.points === 'standard' ? 'selected' : ''}>${t('ed.pts.std')}</option>
         <option value="double" ${q.points === 'double' ? 'selected' : ''}>${t('ed.pts.dbl')}</option>
-        <option value="none" ${q.points === 'none' ? 'selected' : ''}>${t('ed.pts.none')}</option></select></div>
+        <option value="none" ${q.points === 'none' ? 'selected' : ''}>${t('ed.pts.none')}</option></select></div>`}
     </div>
   </div>`;
 }
@@ -455,8 +545,8 @@ function validateEditing() {
     if (isTitle(q)) { if (!q.text.trim()) return t('val.sep', { n: i + 1 }); continue; }
     const n = qNumber(z, i);
     if (!q.text.trim()) return t('val.qtext', { n });
-    if (q.options.filter(o => o.trim()).length < 2) return t('val.opts', { n });
-    if (!q.options[q.correct].trim()) return t('val.correct', { n });
+    if (q.options.filter(o => o.trim()).length < 2) return t(isOrder(q) ? 'val.order' : 'val.opts', { n });
+    if (!isOrder(q) && !isPoll(q) && !q.options[q.correct].trim()) return t('val.correct', { n });
   }
   if (!realCount(z)) return t('val.none');
   return '';
@@ -468,7 +558,8 @@ function compactQuiz(quiz) {
   copy.questions.forEach(q => {
     if (isTitle(q)) { q.text = q.text.trim(); q.subtitle = (q.subtitle || '').trim(); return; }
     const keep = q.options.map((o, j) => ({ o: o.trim(), j })).filter(x => x.o);
-    q.correct = keep.findIndex(x => x.j === q.correct);
+    q.correct = isOrder(q) || isPoll(q) ? 0 : keep.findIndex(x => x.j === q.correct);
+    if (isPoll(q)) q.points = 'none';
     q.options = keep.map(x => x.o);
     q.text = q.text.trim();
     q.explanation = (q.explanation || '').trim();
@@ -1352,6 +1443,7 @@ const actions = {
   },
   'toggle-paste'() { ui.showPaste = !ui.showPaste; render(); },
   'import-paste'() { importText($('#paste-json').value); },
+  'template-csv'() { download('quiz-template.csv', csvTemplate(), 'text/csv;charset=utf-8'); },
   template() {
     download('quiz-template.json', JSON.stringify(templateQuiz(), null, 2));
   },
@@ -1366,6 +1458,8 @@ const actions = {
   'q-up'(el) { const i = +el.dataset.i, a = ui.editing.questions; [a[i - 1], a[i]] = [a[i], a[i - 1]]; render(); },
   'q-down'(el) { const i = +el.dataset.i, a = ui.editing.questions; [a[i + 1], a[i]] = [a[i], a[i + 1]]; render(); },
   'opt-add'(el) { ui.editing.questions[+el.dataset.i].options.push(''); render(); },
+  'item-up'(el) { const o = ui.editing.questions[+el.dataset.i].options, j = +el.dataset.j; [o[j - 1], o[j]] = [o[j], o[j - 1]]; render(); },
+  'item-down'(el) { const o = ui.editing.questions[+el.dataset.i].options, j = +el.dataset.j; [o[j + 1], o[j]] = [o[j], o[j + 1]]; render(); },
   'opt-del'(el) {
     const q = ui.editing.questions[+el.dataset.i], j = +el.dataset.j;
     q.options.splice(j, 1);
@@ -1460,6 +1554,13 @@ document.addEventListener('change', e => {
   const el = e.target, b = el.dataset.bind;
   if (b && ui.editing) {
     const q = ui.editing.questions[+el.dataset.i];
+    if (b === 'q.type') {
+      if (el.value === 'choice') delete q.type; else q.type = el.value;
+      if (!isOrder(q) && q.options.length > 4) q.options = q.options.slice(0, 4);
+      if (q.correct >= q.options.length) q.correct = 0;
+      if (isPoll(q)) q.points = 'none'; else if (q.points === 'none' && !isOrder(q)) q.points = 'standard';
+      render(); return;
+    }
     if (b === 'q.correct') q.correct = +el.dataset.j;
     else if (b === 'q.time') q.time = +el.value;
     else if (b === 'q.points') q.points = el.value;
@@ -1470,15 +1571,19 @@ document.addEventListener('change', e => {
   }
   if (el.id === 'import-file') {
     const files = [...el.files];
-    Promise.all(files.map(f => f.text())).then(texts => texts.forEach(tx => importText(tx)), () => toast(t('imp.readfail'), true));
+    Promise.all(files.map(f => f.text())).then(texts => texts.forEach((tx, k) => importText(tx, files[k].name.replace(/\.[^.]+$/, ''))), () => toast(t('imp.readfail'), true));
     el.value = '';
   }
 });
 
-function importText(text) {
-  let raw;
-  try { raw = JSON.parse(text); } catch { return toast(t('imp.invalid'), true); }
-  const arr = Array.isArray(raw) ? raw : [raw];
+/** Importa JSON o CSV (se detecta por el contenido). `name` (nombre del archivo sin extensión) da título a un CSV. */
+function importText(text, name) {
+  let arr;
+  const looksJson = /^[\s\ufeff]*[\[{]/.test(text);
+  try {
+    if (looksJson) { let raw; try { raw = JSON.parse(text); } catch { return toast(t('imp.invalid'), true); } arr = Array.isArray(raw) ? raw : [raw]; }
+    else arr = [csvToRaw(text, name)];
+  } catch (e) { return toast(e.message, true); }
   const added = [];
   try { arr.forEach(r => added.push(normalizeQuiz(r))); } catch (e) { return toast(e.message, true); }
   const backup = ui.quizzes.slice();
