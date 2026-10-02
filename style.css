@@ -552,3 +552,11 @@ input[type=checkbox] { accent-color: var(--brand); }
 .dd-menu { position: absolute; inset-inline-start: 0; top: calc(100% + 6px); z-index: 20; display: grid; gap: 6px; width: min(280px, calc(100vw - 32px)); padding: 8px; background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius-lg); box-shadow: var(--shadow-lg, var(--shadow-md)); }
 .dd-menu .btn { justify-content: flex-start; text-align: start; }
 .page-head { position: relative; z-index: 6; }
+
+/* tarjeta de anfitrión */
+.grid2 > .card.lift { display: flex; flex-direction: column; }
+.grid2 > .card.lift > .btn { margin-top: auto; align-self: flex-start; }
+.feat { list-style: none; margin: var(--s4) 0 var(--s5); padding: 0; display: grid; gap: var(--s3); }
+.feat li { display: flex; align-items: center; gap: var(--s3); font-weight: 600; }
+.feat-ic { flex: none; width: 40px; height: 40px; border-radius: 12px; display: grid; place-items: center; background: var(--grad-soft); color: var(--link); }
+.feat-ic .ic { width: 20px; height: 20px; }

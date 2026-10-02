@@ -439,6 +439,7 @@ views.home = () => {
     <div class="card lift">
       <h2>${ic('mic')} ${t('hostcard.title')}</h2>
       <p class="muted">${t('hostcard.text')}</p>
+      <ul class="feat">${[['list', 'f1'], ['gamepad', 'f2'], ['users', 'f3'], ['upload', 'f4']].map(([i, k]) => `<li><span class="feat-ic">${ic(i === 'list' ? 'check-circle' : i)}</span>${t('host.' + k)}</li>`).join('')}</ul>
       <button class="btn big" data-act="library">${t('hostcard.btn')} ${ic('arrow', 'ic-arrow')}</button>
     </div>
   </div>
