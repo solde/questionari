@@ -21,6 +21,7 @@ ca: {
   'brand.aria': `quiz.solde.cat, inici`,
   'theme.aria': `Canvia entre mode clar i fosc`,
   'lang.label': `Idioma`,
+  'music.aria': `Activa o desactiva la música`, 'music.on': `Música activada`, 'music.off': `Música desactivada`, 'ed.expl': `Explicació de la resposta (opcional)`, 'ed.expl.ph': `Per què és aquesta la resposta correcta?`, 'reveal.why': `Per què?`,
   'footer.text': `quiz.solde.cat · joc de preguntes sense servidor`,
   'footer.code': `Codi a GitHub`,
   'home.title': `Preguntes, reptes i {em}`, 'home.em': `podi`,
@@ -82,6 +83,7 @@ es: {
   'brand.aria': `quiz.solde.cat, inicio`,
   'theme.aria': `Cambiar entre modo claro y oscuro`,
   'lang.label': `Idioma`,
+  'music.aria': `Activar o desactivar la música`, 'music.on': `Música activada`, 'music.off': `Música desactivada`, 'ed.expl': `Explicación de la respuesta (opcional)`, 'ed.expl.ph': `¿Por qué es esta la respuesta correcta?`, 'reveal.why': `¿Por qué?`,
   'footer.text': `quiz.solde.cat · juego de preguntas sin servidor`,
   'footer.code': `Código en GitHub`,
   'home.title': `Preguntas, retos y {em}`, 'home.em': `podio`,
@@ -143,6 +145,7 @@ en: {
   'brand.aria': `quiz.solde.cat, home`,
   'theme.aria': `Switch between light and dark mode`,
   'lang.label': `Language`,
+  'music.aria': `Turn music on or off`, 'music.on': `Music on`, 'music.off': `Music off`, 'ed.expl': `Answer explanation (optional)`, 'ed.expl.ph': `Why is this the correct answer?`, 'reveal.why': `Why?`,
   'footer.text': `quiz.solde.cat · serverless quiz game`,
   'footer.code': `Code on GitHub`,
   'home.title': `Questions, challenges and the {em}`, 'home.em': `podium`,
@@ -204,6 +207,7 @@ fr: {
   'brand.aria': `quiz.solde.cat, accueil`,
   'theme.aria': `Basculer entre le mode clair et le mode sombre`,
   'lang.label': `Langue`,
+  'music.aria': `Activer ou désactiver la musique`, 'music.on': `Musique activée`, 'music.off': `Musique désactivée`, 'ed.expl': `Explication de la réponse (facultatif)`, 'ed.expl.ph': `Pourquoi est-ce la bonne réponse ?`, 'reveal.why': `Pourquoi ?`,
   'footer.text': `quiz.solde.cat · jeu de quiz sans serveur`,
   'footer.code': `Code sur GitHub`,
   'home.title': `Questions, défis et {em}`, 'home.em': `podium`,
@@ -265,6 +269,7 @@ it: {
   'brand.aria': `quiz.solde.cat, home`,
   'theme.aria': `Passa dalla modalità chiara a quella scura`,
   'lang.label': `Lingua`,
+  'music.aria': `Attiva o disattiva la musica`, 'music.on': `Musica attiva`, 'music.off': `Musica disattivata`, 'ed.expl': `Spiegazione della risposta (facoltativa)`, 'ed.expl.ph': `Perché questa è la risposta corretta?`, 'reveal.why': `Perché?`,
   'footer.text': `quiz.solde.cat · gioco a quiz senza server`,
   'footer.code': `Codice su GitHub`,
   'home.title': `Domande, sfide e {em}`, 'home.em': `podio`,
@@ -326,6 +331,7 @@ ru: {
   'brand.aria': `quiz.solde.cat, главная`,
   'theme.aria': `Переключить светлую и тёмную тему`,
   'lang.label': `Язык`,
+  'music.aria': `Включить или выключить музыку`, 'music.on': `Музыка включена`, 'music.off': `Музыка выключена`, 'ed.expl': `Пояснение к ответу (необязательно)`, 'ed.expl.ph': `Почему именно этот ответ правильный?`, 'reveal.why': `Почему?`,
   'footer.text': `quiz.solde.cat · викторина без сервера`,
   'footer.code': `Код на GitHub`,
   'home.title': `Вопросы, испытания и {em}`, 'home.em': `пьедестал`,
@@ -388,6 +394,7 @@ zh: {
   'brand.aria': `quiz.solde.cat，首页`,
   'theme.aria': `切换浅色和深色模式`,
   'lang.label': `语言`,
+  'music.aria': `开启或关闭音乐`, 'music.on': `音乐已开启`, 'music.off': `音乐已关闭`, 'ed.expl': `答案解析（可选）`, 'ed.expl.ph': `为什么这是正确答案？`, 'reveal.why': `为什么？`,
   'footer.text': `quiz.solde.cat · 无需服务器的问答游戏`,
   'footer.code': `GitHub 源码`,
   'home.title': `提问、挑战与{em}`, 'home.em': `领奖台`,
@@ -451,6 +458,7 @@ tlh: {
   'brand.aria': `quiz.solde.cat, juH`,
   'theme.aria': `wov qIj je yIchoH`,
   'lang.label': `Hol`,
+  'music.aria': `QoQ yIchoH`, 'music.on': `QoQ`, 'music.off': `QoQ pagh`, 'ed.expl': `jang QaQ yajmoH`, 'ed.expl.ph': `qatlh jang QaQ 'oH?`, 'reveal.why': `qatlh?`,
   'footer.text': `quiz.solde.cat · tlhobghach may'`,
   'footer.code': `GitHub`,
   'home.title': `yItlhob, yIjang, {em}`, 'home.em': `yIQap!`,
@@ -511,43 +519,43 @@ tlh: {
 /* cuestionario de ejemplo en cada idioma: [texto, opciones, índice correcto] */
 const SAMPLES = {
   ca: { title: `Cultura general (exemple)`, desc: `Qüestionari d'exemple per provar l'aplicació`, r1: [`Ronda 1`, `Geografia i ciència`], r2: [`Ronda 2`, `Art`], q: [
-    [`Quina és la capital de França?`, [`Madrid`, `París`, `Roma`, `Berlín`], 1],
-    [`Quants planetes té el Sistema Solar?`, [`7`, `8`, `9`, `10`], 1],
-    [`L'aigua bull a 100 °C al nivell del mar.`, [`Cert`, `Fals`], 0],
+    [`Quina és la capital de França?`, [`Madrid`, `París`, `Roma`, `Berlín`], 1, `París és la capital de França i la seva ciutat més gran des de fa segles.`],
+    [`Quants planetes té el Sistema Solar?`, [`7`, `8`, `9`, `10`], 1, `El Sistema Solar té 8 planetes: Mercuri, Venus, la Terra, Mart, Júpiter, Saturn, Urà i Neptú. Plutó es considera planeta nan.`],
+    [`L'aigua bull a 100 °C al nivell del mar.`, [`Cert`, `Fals`], 0, `Al nivell del mar, a pressió atmosfèrica normal, l'aigua bull a 100 °C; a més altitud bull a menys temperatura.`],
     [`Qui va pintar la Gioconda? (pregunta doble)`, [`Picasso`, `Van Gogh`, `Leonardo da Vinci`, `Dalí`], 2]] },
   es: { title: `Cultura general (ejemplo)`, desc: `Cuestionario de ejemplo para probar la aplicación`, r1: [`Ronda 1`, `Geografía y ciencia`], r2: [`Ronda 2`, `Arte`], q: [
-    [`¿Cuál es la capital de Francia?`, [`Madrid`, `París`, `Roma`, `Berlín`], 1],
-    [`¿Cuántos planetas tiene el Sistema Solar?`, [`7`, `8`, `9`, `10`], 1],
-    [`El agua hierve a 100 °C al nivel del mar.`, [`Verdadero`, `Falso`], 0],
+    [`¿Cuál es la capital de Francia?`, [`Madrid`, `París`, `Roma`, `Berlín`], 1, `París es la capital de Francia y su ciudad más grande desde hace siglos.`],
+    [`¿Cuántos planetas tiene el Sistema Solar?`, [`7`, `8`, `9`, `10`], 1, `El Sistema Solar tiene 8 planetas: Mercurio, Venus, la Tierra, Marte, Júpiter, Saturno, Urano y Neptuno. Plutón se considera planeta enano.`],
+    [`El agua hierve a 100 °C al nivel del mar.`, [`Verdadero`, `Falso`], 0, `A nivel del mar, con presión atmosférica normal, el agua hierve a 100 °C; a más altitud hierve a menor temperatura.`],
     [`¿Quién pintó La Gioconda? (pregunta doble)`, [`Picasso`, `Van Gogh`, `Leonardo da Vinci`, `Dalí`], 2]] },
   en: { title: `General knowledge (example)`, desc: `Example quiz to try out the app`, r1: [`Round 1`, `Geography and science`], r2: [`Round 2`, `Art`], q: [
-    [`What is the capital of France?`, [`Madrid`, `Paris`, `Rome`, `Berlin`], 1],
-    [`How many planets are there in the Solar System?`, [`7`, `8`, `9`, `10`], 1],
-    [`Water boils at 100 °C at sea level.`, [`True`, `False`], 0],
+    [`What is the capital of France?`, [`Madrid`, `Paris`, `Rome`, `Berlin`], 1, `Paris is the capital of France and has been its largest city for centuries.`],
+    [`How many planets are there in the Solar System?`, [`7`, `8`, `9`, `10`], 1, `The Solar System has 8 planets: Mercury, Venus, Earth, Mars, Jupiter, Saturn, Uranus and Neptune. Pluto is classified as a dwarf planet.`],
+    [`Water boils at 100 °C at sea level.`, [`True`, `False`], 0, `At sea level and normal atmospheric pressure, water boils at 100 °C; at higher altitude it boils at a lower temperature.`],
     [`Who painted the Mona Lisa? (double points)`, [`Picasso`, `Van Gogh`, `Leonardo da Vinci`, `Dalí`], 2]] },
   fr: { title: `Culture générale (exemple)`, desc: `Quiz d'exemple pour essayer l'application`, r1: [`Manche 1`, `Géographie et sciences`], r2: [`Manche 2`, `Art`], q: [
-    [`Quelle est la capitale de la France ?`, [`Madrid`, `Paris`, `Rome`, `Berlin`], 1],
-    [`Combien de planètes compte le système solaire ?`, [`7`, `8`, `9`, `10`], 1],
-    [`L'eau bout à 100 °C au niveau de la mer.`, [`Vrai`, `Faux`], 0],
+    [`Quelle est la capitale de la France ?`, [`Madrid`, `Paris`, `Rome`, `Berlin`], 1, `Paris est la capitale de la France et sa plus grande ville depuis des siècles.`],
+    [`Combien de planètes compte le système solaire ?`, [`7`, `8`, `9`, `10`], 1, `Le système solaire compte 8 planètes : Mercure, Vénus, la Terre, Mars, Jupiter, Saturne, Uranus et Neptune. Pluton est une planète naine.`],
+    [`L'eau bout à 100 °C au niveau de la mer.`, [`Vrai`, `Faux`], 0, `Au niveau de la mer, à pression atmosphérique normale, l'eau bout à 100 °C ; en altitude, elle bout à une température plus basse.`],
     [`Qui a peint La Joconde ? (points doubles)`, [`Picasso`, `Van Gogh`, `Léonard de Vinci`, `Dalí`], 2]] },
   it: { title: `Cultura generale (esempio)`, desc: `Quiz di esempio per provare l'applicazione`, r1: [`Round 1`, `Geografia e scienze`], r2: [`Round 2`, `Arte`], q: [
-    [`Qual è la capitale della Francia?`, [`Madrid`, `Parigi`, `Roma`, `Berlino`], 1],
-    [`Quanti pianeti ha il Sistema Solare?`, [`7`, `8`, `9`, `10`], 1],
-    [`L'acqua bolle a 100 °C al livello del mare.`, [`Vero`, `Falso`], 0],
+    [`Qual è la capitale della Francia?`, [`Madrid`, `Parigi`, `Roma`, `Berlino`], 1, `Parigi è la capitale della Francia e la sua città più grande da secoli.`],
+    [`Quanti pianeti ha il Sistema Solare?`, [`7`, `8`, `9`, `10`], 1, `Il Sistema Solare ha 8 pianeti: Mercurio, Venere, Terra, Marte, Giove, Saturno, Urano e Nettuno. Plutone è un pianeta nano.`],
+    [`L'acqua bolle a 100 °C al livello del mare.`, [`Vero`, `Falso`], 0, `A livello del mare, a pressione atmosferica normale, l'acqua bolle a 100 °C; in quota bolle a una temperatura più bassa.`],
     [`Chi ha dipinto la Gioconda? (punti doppi)`, [`Picasso`, `Van Gogh`, `Leonardo da Vinci`, `Dalí`], 2]] },
   ru: { title: `Общие знания (пример)`, desc: `Пример викторины для знакомства с приложением`, r1: [`Раунд 1`, `География и наука`], r2: [`Раунд 2`, `Искусство`], q: [
-    [`Какая столица Франции?`, [`Мадрид`, `Париж`, `Рим`, `Берлин`], 1],
-    [`Сколько планет в Солнечной системе?`, [`7`, `8`, `9`, `10`], 1],
-    [`Вода кипит при 100 °C на уровне моря.`, [`Верно`, `Неверно`], 0],
+    [`Какая столица Франции?`, [`Мадрид`, `Париж`, `Рим`, `Берлин`], 1, `Париж — столица Франции и её крупнейший город уже много веков.`],
+    [`Сколько планет в Солнечной системе?`, [`7`, `8`, `9`, `10`], 1, `В Солнечной системе 8 планет: Меркурий, Венера, Земля, Марс, Юпитер, Сатурн, Уран и Нептун. Плутон считается карликовой планетой.`],
+    [`Вода кипит при 100 °C на уровне моря.`, [`Верно`, `Неверно`], 0, `На уровне моря при нормальном атмосферном давлении вода кипит при 100 °C; на высоте — при более низкой температуре.`],
     [`Кто написал «Мону Лизу»? (двойные очки)`, [`Пикассо`, `Ван Гог`, `Леонардо да Винчи`, `Дали`], 2]] },
   zh: { title: `常识问答（示例）`, desc: `用于体验应用的示例题库`, r1: [`第一轮`, `地理与科学`], r2: [`第二轮`, `艺术`], q: [
-    [`法国的首都是哪里？`, [`马德里`, `巴黎`, `罗马`, `柏林`], 1],
-    [`太阳系有几颗行星？`, [`7`, `8`, `9`, `10`], 1],
-    [`在海平面，水在 100 °C 沸腾。`, [`正确`, `错误`], 0],
+    [`法国的首都是哪里？`, [`马德里`, `巴黎`, `罗马`, `柏林`], 1, `巴黎是法国的首都，几个世纪以来一直是法国最大的城市。`],
+    [`太阳系有几颗行星？`, [`7`, `8`, `9`, `10`], 1, `太阳系有 8 颗行星：水星、金星、地球、火星、木星、土星、天王星和海王星。冥王星被归为矮行星。`],
+    [`在海平面，水在 100 °C 沸腾。`, [`正确`, `错误`], 0, `在海平面的标准大气压下，水在 100 °C 沸腾；海拔越高，沸点越低。`],
     [`《蒙娜丽莎》是谁画的？（双倍分）`, [`毕加索`, `梵高`, `达·芬奇`, `达利`], 2]] },
   tlh: { title: `tlhobghachmey (motlh)`, desc: `tlhobghachmey wa'`, r1: [`wa'DIch may'`, `tlhIngan Hol`], r2: [`cha'DIch may'`, `tlhIngan juH`], q: [
-    [`tlhIngan Hol Dajatlh'a'?`, [`HIja'`, `ghobe'`, `chaq`, `Qo'`], 0],
-    [`vagh, jav, Soch: wa'DIch 'oH nuq?`, [`vagh`, `jav`, `Soch`, `wej`], 0],
+    [`tlhIngan Hol Dajatlh'a'?`, [`HIja'`, `ghobe'`, `chaq`, `Qo'`], 0, ``],
+    [`vagh, jav, Soch: wa'DIch 'oH nuq?`, [`vagh`, `jav`, `Soch`, `wej`], 0, ``],
     [`tlhIngan juH pong 'oH nuq?`, [`Qo'noS`, `tera'`, `vulqan`, `romulus`], 0]] },
 };
 
@@ -593,3 +601,15 @@ function tn(key, n, vars) {
   const k = (key + '.' + cat) in d ? key + '.' + cat : key + '.other';
   return t(k, { n, ...vars });
 }
+
+/* explicaciones de las preguntas del cuestionario de ejemplo (mismo orden que SAMPLES[lang].q) */
+const SAMPLE_EXPL = {
+  ca: [`París és la capital de França i la seva ciutat més gran des de fa segles.`, `El Sistema Solar té 8 planetes: Mercuri, Venus, la Terra, Mart, Júpiter, Saturn, Urà i Neptú. Plutó es considera planeta nan.`, `Al nivell del mar, a pressió atmosfèrica normal, l'aigua bull a 100 °C; a més altitud bull a menys temperatura.`, `La Gioconda (Mona Lisa) la va pintar Leonardo da Vinci cap al 1503-1506 i es conserva al Louvre.`],
+  es: [`París es la capital de Francia y su ciudad más grande desde hace siglos.`, `El Sistema Solar tiene 8 planetas: Mercurio, Venus, la Tierra, Marte, Júpiter, Saturno, Urano y Neptuno. Plutón se considera planeta enano.`, `A nivel del mar, con presión atmosférica normal, el agua hierve a 100 °C; a más altitud hierve a menor temperatura.`, `La Gioconda (Mona Lisa) la pintó Leonardo da Vinci hacia 1503-1506 y se conserva en el Louvre.`],
+  en: [`Paris is the capital of France and has been its largest city for centuries.`, `The Solar System has 8 planets: Mercury, Venus, Earth, Mars, Jupiter, Saturn, Uranus and Neptune. Pluto is classified as a dwarf planet.`, `At sea level and normal atmospheric pressure, water boils at 100 °C; at higher altitude it boils at a lower temperature.`, `The Mona Lisa was painted by Leonardo da Vinci around 1503-1506 and is kept in the Louvre.`],
+  fr: [`Paris est la capitale de la France et sa plus grande ville depuis des siècles.`, `Le système solaire compte 8 planètes : Mercure, Vénus, la Terre, Mars, Jupiter, Saturne, Uranus et Neptune. Pluton est une planète naine.`, `Au niveau de la mer, à pression atmosphérique normale, l'eau bout à 100 °C ; en altitude, elle bout à une température plus basse.`, `La Joconde a été peinte par Léonard de Vinci vers 1503-1506 et se trouve au Louvre.`],
+  it: [`Parigi è la capitale della Francia e la sua città più grande da secoli.`, `Il Sistema Solare ha 8 pianeti: Mercurio, Venere, Terra, Marte, Giove, Saturno, Urano e Nettuno. Plutone è un pianeta nano.`, `A livello del mare, a pressione atmosferica normale, l'acqua bolle a 100 °C; in quota bolle a una temperatura più bassa.`, `La Gioconda fu dipinta da Leonardo da Vinci intorno al 1503-1506 ed è conservata al Louvre.`],
+  ru: [`Париж — столица Франции и её крупнейший город уже много веков.`, `В Солнечной системе 8 планет: Меркурий, Венера, Земля, Марс, Юпитер, Сатурн, Уран и Нептун. Плутон считается карликовой планетой.`, `На уровне моря при нормальном атмосферном давлении вода кипит при 100 °C; на высоте — при более низкой температуре.`, `«Мону Лизу» написал Леонардо да Винчи около 1503–1506 годов; картина хранится в Лувре.`],
+  zh: [`巴黎是法国的首都，几个世纪以来一直是法国最大的城市。`, `太阳系有 8 颗行星：水星、金星、地球、火星、木星、土星、天王星和海王星。冥王星被归为矮行星。`, `在海平面的标准大气压下，水在 100 °C 沸腾；海拔越高，沸点越低。`, `《蒙娜丽莎》由达·芬奇于约 1503–1506 年绘制，现藏于卢浮宫。`],
+  tlh: [`HIja'! Qapla'!`, `vagh 'oH wa'DIch.`, `Qo'noS 'oH tlhIngan juH.`],
+};

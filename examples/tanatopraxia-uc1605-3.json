@@ -21,7 +21,8 @@
    ],
    "correct": 2,
    "time": 20,
-   "points": "standard"
+   "points": "standard",
+   "explanation": "El RD 664/1997, de 12 de maig, protegeix els treballadors contra els riscos de l'exposició a agents biològics durant el treball."
   },
   {
    "text": "Com s'anomena una malaltia que ja porta prèviament un animal superior i que es pot transmetre a l'ésser humà?",
@@ -34,7 +35,8 @@
    ],
    "correct": 2,
    "time": 20,
-   "points": "standard"
+   "points": "standard",
+   "explanation": "Una zoonosi és una malaltia que ja porta un animal (l'hoste inicial) i que passa a l'ésser humà pel contacte amb l'animal o amb els seus productes derivats."
   },
   {
    "text": "Quin és el millor mitjà de transmissió dels agents biològics en suspensió (bioaerosols)?",
@@ -47,7 +49,8 @@
    ],
    "correct": 0,
    "time": 20,
-   "points": "standard"
+   "points": "standard",
+   "explanation": "Els bioaerosols (agents biològics en suspensió a l'aire) són el millor mitjà de transmissió d'aquests agents."
   },
   {
    "text": "Segons el RD 664/1997, quin és un criteri per classificar els agents biològics segons la seva perillositat?",
@@ -60,7 +63,8 @@
    ],
    "correct": 0,
    "time": 25,
-   "points": "standard"
+   "points": "standard",
+   "explanation": "Es té en compte el grau d'infectivitat: la facilitat de propagació de la malaltia i l'existència (o no) de vacuna o tractament."
   },
   {
    "text": "A quin grup d'agents biològics pertanyen Mycobacterium tuberculosis i el virus de l'hepatitis B?",
@@ -73,7 +77,8 @@
    ],
    "correct": 0,
    "time": 20,
-   "points": "standard"
+   "points": "standard",
+   "explanation": "El grup 3 recull agents que poden causar malaltia greu i propagar-se a la col·lectivitat, però que tenen profilaxi o tractament eficaç; per exemple, Mycobacterium tuberculosis i el virus de l'hepatitis B."
   },
   {
    "text": "Quin exemple de la presentació correspon al grup 4 (greu perill, sense profilaxi ni tractament eficaços)?",
@@ -86,7 +91,8 @@
    ],
    "correct": 0,
    "time": 20,
-   "points": "standard"
+   "points": "standard",
+   "explanation": "El grup 4 inclou agents que causen malaltia greu, amb moltes probabilitats de propagar-se i sense profilaxi ni tractament eficaços, com el virus d'Ébola."
   },
   {
    "text": "El virus de la grip es classifica, segons la presentació, dins del…",
@@ -99,7 +105,8 @@
    ],
    "correct": 2,
    "time": 20,
-   "points": "standard"
+   "points": "standard",
+   "explanation": "El virus de la grip és l'exemple de grup 2: pot causar malaltia i ser un perill per als treballadors, però és poc probable que es propagui a la col·lectivitat i hi ha profilaxi o tractament eficaç."
   },
   {
    "text": "Quin filtre dels EPI contra partícules s'utilitza per prevenir la transmissió de microorganismes per via aèria?",
@@ -112,7 +119,8 @@
    ],
    "correct": 0,
    "time": 20,
-   "points": "standard"
+   "points": "standard",
+   "explanation": "Els filtres P3 són els de més protecció contra partícules i es poden utilitzar per prevenir la transmissió de microorganismes per via aèria."
   },
   {
    "text": "Quin tipus de filtre s'utilitza per filtrar l'aire extret de les sales d'autòpsia?",
@@ -125,7 +133,8 @@
    ],
    "correct": 2,
    "time": 20,
-   "points": "standard"
+   "points": "standard",
+   "explanation": "L'aire extret de les sales d'autòpsia es filtra amb filtres HEPA, d'alta eficàcia per a partícules de l'aire."
   },
   {
    "text": "Quines vacunes s'han de posar a disposició dels treballadors de tanatopràxia?",
@@ -138,7 +147,8 @@
    ],
    "correct": 2,
    "time": 20,
-   "points": "standard"
+   "points": "standard",
+   "explanation": "S'han de posar a disposició dels treballadors les vacunes contra el tètanus i l'hepatitis B, a més dels controls periòdics del servei de prevenció de riscos laborals."
   },
   {
    "text": "Què s'ha de fer amb les ferides i lesions de les mans abans de treballar?",
@@ -151,7 +161,8 @@
    ],
    "correct": 0,
    "time": 20,
-   "points": "standard"
+   "points": "standard",
+   "explanation": "Les ferides i lesions de les mans o de parts descobertes s'han de cobrir amb apòsits impermeables per evitar el contacte amb agents biològics."
   },
   {
    "text": "Quins guants es recomanen com a EPI en tanatopràxia?",
@@ -164,7 +175,8 @@
    ],
    "correct": 3,
    "time": 20,
-   "points": "standard"
+   "points": "standard",
+   "explanation": "Es recomanen guants de làtex i guants de material anticort, com el Kevlar, per evitar talls amb les eines."
   },
   {
    "text": "Quina simetria presenta la majoria de virus que infecten animals?",
@@ -177,7 +189,8 @@
    ],
    "correct": 2,
    "time": 20,
-   "points": "standard"
+   "points": "standard",
+   "explanation": "La majoria dels virus que infecten animals són icosaèdrics o gairebé esfèrics: l'icosaedre és la millor manera de formar una càpsula tancada a partir de subunitats idèntiques."
   },
   {
    "text": "Què és l'embolcall víric?",
@@ -190,7 +203,8 @@
    ],
    "correct": 2,
    "time": 25,
-   "points": "standard"
+   "points": "standard",
+   "explanation": "L'embolcall víric és una bicapa lipídica exterior que alguns virus obtenen d'una forma modificada de les membranes cel·lulars de l'hoste."
   },
   {
    "text": "Quin sufix tenen els noms de les famílies víriques segons la taxonomia de l'ICTV?",
@@ -203,7 +217,8 @@
    ],
    "correct": 1,
    "time": 20,
-   "points": "standard"
+   "points": "standard",
+   "explanation": "En la taxonomia de l'ICTV les famílies porten el sufix -viridae (els ordres, -virales, i les subfamílies, -virinae)."
   },
   {
    "text": "En què es basa la classificació de Baltimore dels virus?",
@@ -216,7 +231,8 @@
    ],
    "correct": 1,
    "time": 20,
-   "points": "standard"
+   "points": "standard",
+   "explanation": "La classificació de Baltimore agrupa els virus (grups I a VII) segons el mecanisme de producció de l'ARNm."
   },
   {
    "text": "El coronavirus de la imatge (SARS-CoV-2) pertany a la classificació de Baltimore al grup…",
@@ -229,7 +245,8 @@
    ],
    "correct": 3,
    "time": 25,
-   "points": "double"
+   "points": "double",
+   "explanation": "El SARS-CoV-2 és un virus d'ARN monocatenari de polaritat positiva, el grup IV de la classificació de Baltimore."
   },
   {
    "text": "Quin tipus de virus és el VIH (imatge)?",
@@ -242,7 +259,8 @@
    ],
    "correct": 0,
    "time": 20,
-   "points": "standard"
+   "points": "standard",
+   "explanation": "El VIH és un lentivirus de la família Retroviridae, amb el virió esfèric, embolcall i càpsula proteica."
   },
   {
    "text": "Quin és el genoma del VIH?",
@@ -255,7 +273,8 @@
    ],
    "correct": 0,
    "time": 20,
-   "points": "standard"
+   "points": "standard",
+   "explanation": "El genoma del VIH és ARN monocatenari que s'ha de copiar provisionalment a ADN per poder multiplicar-se i integrar-se en el genoma de la cèl·lula infectada."
   },
   {
    "text": "A quines cèl·lules s'acoblen específicament els antígens de l'embolcall del VIH?",
@@ -268,7 +287,8 @@
    ],
    "correct": 1,
    "time": 20,
-   "points": "standard"
+   "points": "standard",
+   "explanation": "Els antígens proteics de l'embolcall del VIH s'acoblen de manera específica a proteïnes de la membrana de les cèl·lules infectables, especialment dels limfòcits T."
   },
   {
    "text": "Quin és el risc de transmissió del VIH per via percutània segons la bibliografia citada?",
@@ -281,7 +301,8 @@
    ],
    "correct": 3,
    "time": 25,
-   "points": "standard"
+   "points": "standard",
+   "explanation": "La literatura xifra el risc de transmissió del VIH per via percutània per sota del 0,3% (per via mucocutània, entre 0,04 i 0,63%)."
   },
   {
    "text": "Quin equip va descobrir el VIH l'any 1983?",
@@ -294,7 +315,8 @@
    ],
    "correct": 3,
    "time": 20,
-   "points": "standard"
+   "points": "standard",
+   "explanation": "El VIH va ser descobert el 1983 a França per l'equip de Luc Montagnier i es va identificar com l'agent de l'epidèmia de sida."
   },
   {
    "text": "La imatge mostra cavernes pulmonars i bacils. Quina malaltia causa Mycobacterium tuberculosis (bacil de Koch)?",
@@ -307,7 +329,8 @@
    ],
    "correct": 0,
    "time": 20,
-   "points": "standard"
+   "points": "standard",
+   "explanation": "La tuberculosi la causa el bacil de Koch (Mycobacterium tuberculosis), que forma lesions anomenades cavernes tuberculoses als pulmons."
   },
   {
    "text": "Quin és l'òrgan principalment afectat per la tuberculosi?",
@@ -320,7 +343,8 @@
    ],
    "correct": 0,
    "time": 20,
-   "points": "standard"
+   "points": "standard",
+   "explanation": "La tuberculosi és una infecció bacteriana contagiosa que afecta principalment els pulmons, encara que pot propagar-se a altres òrgans."
   },
   {
    "text": "On i quan va aparèixer per primera vegada el SARS?",
@@ -333,7 +357,8 @@
    ],
    "correct": 3,
    "time": 20,
-   "points": "standard"
+   "points": "standard",
+   "explanation": "El SARS (síndrome respiratòria aguda severa) va aparèixer el novembre de 2002 a la província de Guangdong (Xina) i va tenir una mortalitat mitjana propera al 13%."
   },
   {
    "text": "Quin virus de l'hepatitis és un virus ADN i disposa de vacuna?",
@@ -346,7 +371,8 @@
    ],
    "correct": 2,
    "time": 20,
-   "points": "standard"
+   "points": "standard",
+   "explanation": "L'hepatitis B és un virus d'ADN amb risc de transmissió elevat, però que es pot prevenir amb vacuna; l'hepatitis C és un virus d'ARN sense vacuna."
   },
   {
    "text": "Què és cert sobre el virus de l'hepatitis C?",
@@ -359,7 +385,8 @@
    ],
    "correct": 1,
    "time": 20,
-   "points": "standard"
+   "points": "standard",
+   "explanation": "El virus de l'hepatitis C és un virus d'ARN i no té vacuna ni tractament profilàctic postexposició."
   },
   {
    "text": "Aquest fetge, amb la superfície nodular, és típic de la infecció crònica per VHC. Quina complicació mostra?",
@@ -372,7 +399,8 @@
    ],
    "correct": 1,
    "time": 25,
-   "points": "standard"
+   "points": "standard",
+   "explanation": "La infecció crònica pel VHC pot evolucionar a fibrosi i cirrosi del fetge i, amb el temps, a càncer de fetge."
   },
   {
    "text": "Quin és el risc aproximat de transmissió percutània del virus de l'hepatitis C?",
@@ -385,7 +413,8 @@
    ],
    "correct": 1,
    "time": 20,
-   "points": "standard"
+   "points": "standard",
+   "explanation": "El virus de l'hepatitis C té un risc de transmissió percutània menor que el de l'hepatitis B: aproximadament del 3%."
   },
   {
    "text": "Què és un paràsit?",
@@ -398,7 +427,8 @@
    ],
    "correct": 3,
    "time": 20,
-   "points": "standard"
+   "points": "standard",
+   "explanation": "Un paràsit és un ésser viu que passa una part o la totalitat de la seva vida a l'interior o a l'exterior d'un altre ésser viu d'una espècie diferent (l'hoste)."
   },
   {
    "text": "Observa la imatge: la puça i els polls són…",
@@ -411,7 +441,8 @@
    ],
    "correct": 0,
    "time": 20,
-   "points": "standard"
+   "points": "standard",
+   "explanation": "Els ectoparàsits viuen en contacte amb l'exterior de l'hoste; la puça i el poll en són exemples."
   },
   {
    "text": "Quin exemple d'endoparàsit cita la presentació?",
@@ -424,7 +455,8 @@
    ],
    "correct": 1,
    "time": 20,
-   "points": "standard"
+   "points": "standard",
+   "explanation": "Els endoparàsits viuen a l'interior del cos de l'hoste; la presentació cita la tènia (o la triquina)."
   },
   {
    "text": "Per on solen entrar els cucs paràsits a l'organisme?",
@@ -437,7 +469,8 @@
    ],
    "correct": 1,
    "time": 20,
-   "points": "standard"
+   "points": "standard",
+   "explanation": "Els cucs solen entrar per la boca, tot i que alguns ho fan per la pell, per exemple per la planta dels peus o en aigües infectades."
   },
   {
    "text": "Com s'anomenen els paràsits petits i extremadament nombrosos que es multipliquen dins de l'hoste?",
@@ -450,7 +483,8 @@
    ],
    "correct": 0,
    "time": 20,
-   "points": "standard"
+   "points": "standard",
+   "explanation": "Els microparàsits són petits i extremadament nombrosos, i es multipliquen dins l'hoste, sovint dins de les seves cèl·lules."
   },
   {
    "text": "Quin paràsit causa el paludisme (malària)?",
@@ -463,7 +497,8 @@
    ],
    "correct": 2,
    "time": 20,
-   "points": "standard"
+   "points": "standard",
+   "explanation": "El paludisme (malària) és una infecció dels glòbuls vermells causada pel Plasmodium, un organisme unicel·lular."
   },
   {
    "text": "Quin mosquit transmet el paludisme?",
@@ -476,7 +511,8 @@
    ],
    "correct": 1,
    "time": 20,
-   "points": "standard"
+   "points": "standard",
+   "explanation": "El Plasmodium es transmet per la picada de la femella del mosquit Anopheles infectada (també per transfusió o per agulles contaminades)."
   },
   {
    "text": "El paludisme és una infecció de…",
@@ -489,7 +525,8 @@
    ],
    "correct": 1,
    "time": 20,
-   "points": "standard"
+   "points": "standard",
+   "explanation": "El paludisme és una infecció dels glòbuls vermells causada pel Plasmodium."
   },
   {
    "text": "La triquinosi la causa Trichinella spiralis. Com s'agafa?",
@@ -502,7 +539,8 @@
    ],
    "correct": 3,
    "time": 20,
-   "points": "standard"
+   "points": "standard",
+   "explanation": "La triquinosi s'agafa en ingerir carn de porc o derivats crus, mal cuits o mal processats que contenen quists de Trichinella spiralis."
   },
   {
    "text": "Quina malaltia parasitària produeix picor anal (comezon)?",
@@ -515,7 +553,8 @@
    ],
    "correct": 0,
    "time": 20,
-   "points": "standard"
+   "points": "standard",
+   "explanation": "L'oxiürosi (causada pels oxiürs) provoca picor a la zona anal."
   },
   {
    "text": "L'uncinariosi també es coneix com…",
@@ -528,7 +567,8 @@
    ],
    "correct": 3,
    "time": 20,
-   "points": "standard"
+   "points": "standard",
+   "explanation": "L'uncinariosi, causada per anquilostomes, provoca anèmia i per això es coneix com a anèmia del tròpic."
   },
   {
    "text": "La malaltia de Chagas provoca principalment patologies…",
@@ -541,7 +581,8 @@
    ],
    "correct": 3,
    "time": 20,
-   "points": "standard"
+   "points": "standard",
+   "explanation": "La malaltia de Chagas provoca patologies cardíaques i intestinals."
   },
   {
    "text": "Què és una micosi?",
@@ -554,7 +595,8 @@
    ],
    "correct": 0,
    "time": 20,
-   "points": "standard"
+   "points": "standard",
+   "explanation": "Una micosi és una infecció causada per un fong (regne Fungi), com la caspa, el peu d'atleta o la tinya."
   },
   {
    "text": "Quin organisme de la imatge és essencial en la majoria de tipus de pa?",
@@ -567,7 +609,8 @@
    ],
    "correct": 3,
    "time": 20,
-   "points": "standard"
+   "points": "standard",
+   "explanation": "El llevat és un fong i un ingredient necessari en la majoria dels tipus de pa."
   },
   {
    "text": "Com s'alimenten els fongs?",
@@ -580,7 +623,8 @@
    ],
    "correct": 1,
    "time": 20,
-   "points": "standard"
+   "points": "standard",
+   "explanation": "Els fongs no es poden desplaçar: s'alimenten per absorció, sintetitzant substàncies orgàniques mentre es multipliquen i colonitzen l'entorn."
   },
   {
    "text": "Quin tipus de fong descompon la matèria orgànica morta i la converteix en nutrients?",
@@ -593,7 +637,8 @@
    ],
    "correct": 0,
    "time": 20,
-   "points": "standard"
+   "points": "standard",
+   "explanation": "Els fongs sapròfits descomponen la matèria orgànica morta i la converteixen en nutrients, de manera que són essencials en el cicle de la vida."
   },
   {
    "text": "Les infeccions per Candida afecten sobretot…",
@@ -606,7 +651,8 @@
    ],
    "correct": 2,
    "time": 20,
-   "points": "standard"
+   "points": "standard",
+   "explanation": "Candida és un fong oportunista que afecta zones amb plecs a la pell (aixelles, engonals, sota el pit...) i causa envermelliment i picor."
   },
   {
    "text": "Quina patologia coneguda és causada per la tinya als peus?",
@@ -619,7 +665,8 @@
    ],
    "correct": 2,
    "time": 20,
-   "points": "standard"
+   "points": "standard",
+   "explanation": "La tinya als peus provoca picors i pústules a la planta; és el conegut peu d'atleta."
   },
   {
    "text": "Per quina via penetra el fong de la coccidioidomicosi?",
@@ -632,7 +679,8 @@
    ],
    "correct": 1,
    "time": 20,
-   "points": "standard"
+   "points": "standard",
+   "explanation": "El fong de la coccidioidomicosi penetra per les vies respiratòries i des d'allà intenta colonitzar tot l'organisme."
   },
   {
    "type": "title",
@@ -651,7 +699,8 @@
    ],
    "correct": 1,
    "time": 15,
-   "points": "standard"
+   "points": "standard",
+   "explanation": "El pH normal de la sang arterial és de 7,36 a 7,44; fora d'aquest rang hi ha alcalosi (massa bàsic) o acidosi (massa àcid)."
   },
   {
    "text": "Quant volum de sang té aproximadament una persona adulta?",
@@ -664,7 +713,8 @@
    ],
    "correct": 3,
    "time": 20,
-   "points": "standard"
+   "points": "standard",
+   "explanation": "Un adult té 4-5 litres de sang, al voltant del 7% del pes corporal (uns 65 a 71 ml per kg)."
   },
   {
    "text": "Quin és el percentatge aproximat d'hematòcrit (elements formes) de la sang, com mostra el tub de la imatge?",
@@ -677,7 +727,8 @@
    ],
    "correct": 3,
    "time": 20,
-   "points": "standard"
+   "points": "standard",
+   "explanation": "Els elements formes són aproximadament el 45% de la sang (l'hematòcrit) i el plasma representa l'altre 55%."
   },
   {
    "text": "Quin és el nom de la fase líquida de la sang, un fluid translúcid i groguenc?",
@@ -690,7 +741,8 @@
    ],
    "correct": 1,
    "time": 20,
-   "points": "standard"
+   "points": "standard",
+   "explanation": "El plasma sanguini és un fluid translúcid i groguenc: la matriu extracel·lular líquida on estan suspesos els elements formes."
   },
   {
    "text": "Quin percentatge aproximat dels elements formes representen els eritròcits?",
@@ -703,7 +755,8 @@
    ],
    "correct": 1,
    "time": 20,
-   "points": "standard"
+   "points": "standard",
+   "explanation": "Els eritròcits (glòbuls vermells) constitueixen aproximadament el 96% dels elements figurats."
   },
   {
    "text": "Quin és el comptatge normal d'eritròcits en l'home?",
@@ -716,7 +769,8 @@
    ],
    "correct": 3,
    "time": 20,
-   "points": "standard"
+   "points": "standard",
+   "explanation": "En l'home el valor normal és d'uns 5.400.000 hematies per mm³ (a la dona, uns 4.800.000)."
   },
   {
    "text": "Quina forma tenen els eritròcits (imatge)?",
@@ -729,7 +783,8 @@
    ],
    "correct": 3,
    "time": 20,
-   "points": "standard"
+   "points": "standard",
+   "explanation": "Els eritròcits tenen forma de disc bicòncau, deprimit al centre, cosa que n'augmenta la superfície efectiva de membrana."
   },
   {
    "text": "Quin element del vas sanguini de la imatge transporta l'oxigen?",
@@ -742,7 +797,8 @@
    ],
    "correct": 1,
    "time": 20,
-   "points": "standard"
+   "points": "standard",
+   "explanation": "Els glòbuls vermells transporten l'oxigen gràcies a l'hemoglobina que contenen."
   },
   {
    "text": "On es formen els eritròcits en humans adults?",
@@ -755,7 +811,8 @@
    ],
    "correct": 0,
    "time": 20,
-   "points": "standard"
+   "points": "standard",
+   "explanation": "Els eritròcits dels adults es formen a la medul·la òssia, on expulsen el nucli abans d'entrar al torrent sanguini."
   },
   {
    "text": "Quina és la vida mitjana d'un eritròcit?",
@@ -768,7 +825,8 @@
    ],
    "correct": 3,
    "time": 20,
-   "points": "standard"
+   "points": "standard",
+   "explanation": "Després d'una vida mitjana de 120 dies, els eritròcits són destruïts i retirats de la sang."
   },
   {
    "text": "Quins són els valors normals d'hemoglobina?",
@@ -781,7 +839,8 @@
    ],
    "correct": 2,
    "time": 20,
-   "points": "standard"
+   "points": "standard",
+   "explanation": "Els nivells normals d'hemoglobina van de 12 a 18 g/dl de sang, proporcionals a la quantitat i qualitat dels hematies."
   },
   {
    "text": "A la molècula d'hemoglobina de la imatge, a quin grup se li fixa l'oxigen?",
@@ -794,7 +853,8 @@
    ],
    "correct": 2,
    "time": 20,
-   "points": "standard"
+   "points": "standard",
+   "explanation": "L'hemoglobina és una proteïna conjugada que conté el grup «hemo», que és on es fixa l'oxigen."
   },
   {
    "text": "Quins òrgans destrueixen els eritròcits vells?",
@@ -807,7 +867,8 @@
    ],
    "correct": 3,
    "time": 20,
-   "points": "standard"
+   "points": "standard",
+   "explanation": "Els eritròcits vells són destruïts i retirats de la sang per la melsa, el fetge i la medul·la òssia."
   },
   {
    "text": "En què es degrada l'hemoglobina i es recicla el ferro?",
@@ -820,7 +881,8 @@
    ],
    "correct": 0,
    "time": 20,
-   "points": "standard"
+   "points": "standard",
+   "explanation": "L'hemoglobina es degrada en bilirubina, mentre que el ferro es recicla per formar hemoglobina nova."
   },
   {
    "text": "Quin és el comptatge normal de leucòcits?",
@@ -833,7 +895,8 @@
    ],
    "correct": 0,
    "time": 20,
-   "points": "standard"
+   "points": "standard",
+   "explanation": "El comptatge normal de leucòcits és de 4.500 a 11.500 cèl·lules per mm³, variable segons les condicions fisiològiques i patològiques."
   },
   {
    "text": "Quins leucòcits són granulòcits?",
@@ -846,7 +909,8 @@
    ],
    "correct": 0,
    "time": 20,
-   "points": "standard"
+   "points": "standard",
+   "explanation": "Els granulòcits (polimorfonuclears) són els neutròfils, els basòfils i els eosinòfils; els limfòcits i els monòcits són agranulòcits."
   },
   {
    "text": "Quin és el leucòcit més abundant (55-70%)?",
@@ -859,7 +923,8 @@
    ],
    "correct": 2,
    "time": 20,
-   "points": "standard"
+   "points": "standard",
+   "explanation": "Els neutròfils són els leucòcits més abundants (55-70%) i s'encarreguen de fagocitar substàncies estranyes com els bacteris."
   },
   {
    "text": "Quin leucòcit segrega heparina i histamina?",
@@ -872,7 +937,8 @@
    ],
    "correct": 1,
    "time": 20,
-   "points": "standard"
+   "points": "standard",
+   "explanation": "Els basòfils segreguen heparina (anticoagulant) i histamina, que contribueix al procés de la inflamació."
   },
   {
    "text": "Quin leucòcit augmenta en paràsits, al·lèrgies i asma i té nucli bilobulat 'en antifaç'?",
@@ -885,7 +951,8 @@
    ],
    "correct": 3,
    "time": 20,
-   "points": "standard"
+   "points": "standard",
+   "explanation": "Els eosinòfils augmenten en malalties produïdes per paràsits, en al·lèrgies i en asma; el seu nucli de dos lòbuls els dóna forma d'antifaç."
   },
   {
    "text": "Quin leucòcit té el nucli en forma de ronyó i es diferencia a macròfag als teixits?",
@@ -898,7 +965,8 @@
    ],
    "correct": 0,
    "time": 20,
-   "points": "standard"
+   "points": "standard",
+   "explanation": "Els monòcits tenen el nucli en forma de ronyó i, als teixits, es diferencien cap a macròfags o histiòcits."
   },
   {
    "text": "Quins limfòcits s'encarreguen de la immunitat humoral (secreció d'anticossos)?",
@@ -911,7 +979,8 @@
    ],
    "correct": 3,
    "time": 20,
-   "points": "standard"
+   "points": "standard",
+   "explanation": "Els limfòcits B s'encarreguen de la immunitat humoral: secreten anticossos i són responsables de les immunoglobulines."
   },
   {
    "text": "Quina proporció dels limfòcits són limfòcits T?",
@@ -924,7 +993,8 @@
    ],
    "correct": 0,
    "time": 20,
-   "points": "standard"
+   "points": "standard",
+   "explanation": "Els limfòcits T constitueixen aproximadament el 70% de tots els limfòcits."
   },
   {
    "text": "Quina és la xifra normal de plaquetes?",
@@ -937,7 +1007,8 @@
    ],
    "correct": 0,
    "time": 20,
-   "points": "standard"
+   "points": "standard",
+   "explanation": "El valor quantitatiu normal de plaquetes és de 150.000 a 450.000 per mm³."
   },
   {
    "text": "De quina cèl·lula gegant de la medul·la òssia provenen les plaquetes?",
@@ -950,7 +1021,8 @@
    ],
    "correct": 0,
    "time": 20,
-   "points": "standard"
+   "points": "standard",
+   "explanation": "Les plaquetes es produeixen a la medul·la òssia per fragmentació del citoplasma dels megacariòcits."
   },
   {
    "text": "Quines cèl·lules de la sang són estrictament cèl·lules, ja que 'estan de pas' per la sang?",
@@ -963,7 +1035,8 @@
    ],
    "correct": 3,
    "time": 20,
-   "points": "standard"
+   "points": "standard",
+   "explanation": "Els leucòcits són les úniques cèl·lules en sentit estricte: «estan de pas» per la sang per complir la seva funció en altres teixits. Eritròcits i plaquetes són fragments cel·lulars."
   },
   {
    "text": "Quin percentatge de l'oxigen es transporta combinat amb l'hemoglobina?",
@@ -976,7 +1049,8 @@
    ],
    "correct": 0,
    "time": 20,
-   "points": "standard"
+   "points": "standard",
+   "explanation": "El 98,5% de l'oxigen va combinat amb l'hemoglobina; només l'1,5% està físicament dissolt."
   },
   {
    "text": "Quin tipus d'hemoglobina produeix el fetus per captar millor l'oxigen?",
@@ -989,7 +1063,8 @@
    ],
    "correct": 3,
    "time": 25,
-   "points": "standard"
+   "points": "standard",
+   "explanation": "El fetus rep poc oxigen a través de la placenta; per això produeix hemoglobina F, amb més afinitat per l'oxigen, per extreure'n el màxim."
   },
   {
    "text": "Segons la imatge, en quina forma es transporta la major part del CO₂ per la sang?",
@@ -1002,7 +1077,8 @@
    ],
    "correct": 0,
    "time": 20,
-   "points": "double"
+   "points": "double",
+   "explanation": "La major part del diòxid de carboni es transporta per la sang en forma d'ions bicarbonat."
   },
   {
    "text": "Com es diu la coloració blavosa de la pell i les mucoses per manca d'oxigen (imatge)?",
@@ -1015,7 +1091,8 @@
    ],
    "correct": 0,
    "time": 20,
-   "points": "standard"
+   "points": "standard",
+   "explanation": "La cianosi és la coloració blavosa de la pell i de les mucoses, deguda a l'hemoglobina sense oxigen."
   },
   {
    "text": "A partir de quina concentració d'hemoglobina sense oxigen apareix cianosi?",
@@ -1028,7 +1105,8 @@
    ],
    "correct": 2,
    "time": 20,
-   "points": "standard"
+   "points": "standard",
+   "explanation": "Apareix cianosi quan hi ha concentracions iguals o superiors a 5 g/dl d'hemoglobina sense oxigen als vasos propers a la superfície de la pell."
   },
   {
    "text": "Quina cianosi afecta només les extremitats?",
@@ -1041,7 +1119,8 @@
    ],
    "correct": 1,
    "time": 20,
-   "points": "standard"
+   "points": "standard",
+   "explanation": "La cianosi perifèrica afecta només les extremitats (mans, peus, orelles, nas) per disminució del flux sanguini perifèric i vasoconstricció; la central afecta els llavis i la llengua."
   },
   {
    "text": "En quin estat és més fàcil que aparegui cianosi?",
@@ -1054,7 +1133,8 @@
    ],
    "correct": 2,
    "time": 20,
-   "points": "standard"
+   "points": "standard",
+   "explanation": "Com que la cianosi depèn de la quantitat (no del percentatge) d'hemoglobina desoxigenada, és més fàcil de veure en la policitèmia que en l'anèmia."
   },
   {
    "text": "En un cadàver, la coloració porpra fosca per agrupació gravitacional de la sang en parts declives…",
@@ -1067,7 +1147,8 @@
    ],
    "correct": 3,
    "time": 25,
-   "points": "standard"
+   "points": "standard",
+   "explanation": "En un cadàver, la coloració porpra fosca per l'agrupació gravitacional de sang a les parts declives no s'ha d'anomenar cianosi, un terme reservat a la clínica."
   },
   {
    "text": "Segons el diagrama de la cascada, quin és el primer pas del taponament (coagulació)?",
@@ -1080,7 +1161,8 @@
    ],
    "correct": 0,
    "time": 30,
-   "points": "standard"
+   "points": "standard",
+   "explanation": "Una cascada complexa de reaccions que afecta més d'una dotzena de factors de coagulació forma primer l'activador de la protrombina; després la trombina farà la fibrina."
   },
   {
    "text": "Quin enzim converteix el fibrinogen en fibres de fibrina?",
@@ -1093,7 +1175,8 @@
    ],
    "correct": 3,
    "time": 20,
-   "points": "standard"
+   "points": "standard",
+   "explanation": "La trombina actua com un enzim que converteix el fibrinogen en fibres de fibrina, que atrapen plaquetes, cèl·lules sanguínies i plasma i formen el coàgul."
   },
   {
    "text": "De què està format un coàgul sanguini?",
@@ -1106,7 +1189,8 @@
    ],
    "correct": 3,
    "time": 20,
-   "points": "standard"
+   "points": "standard",
+   "explanation": "Un coàgul sanguini està format per plaquetes, glòbuls vermells i proteïnes especials anomenades factors de coagulació."
   },
   {
    "text": "En toxicologia postmortem, el gradient C/P compara…",
@@ -1119,7 +1203,8 @@
    ],
    "correct": 2,
    "time": 25,
-   "points": "standard"
+   "points": "standard",
+   "explanation": "El gradient C/P compara la concentració de tòxics en sang central amb la de sang perifèrica per quantificar la redistribució postmortem."
   },
   {
    "type": "title",
@@ -1138,7 +1223,8 @@
    ],
    "correct": 3,
    "time": 20,
-   "points": "standard"
+   "points": "standard",
+   "explanation": "L'edema és l'acumulació de líquid a l'espai intersticial i a les cavitats de l'organisme; es considera un signe clínic."
   },
   {
    "text": "Segons la regla 60-40-20, quin percentatge del pes corporal és aigua?",
@@ -1151,7 +1237,8 @@
    ],
    "correct": 2,
    "time": 20,
-   "points": "standard"
+   "points": "standard",
+   "explanation": "Segons la regla 60-40-20, aproximadament el 60% del pes corporal és aigua (40% intracel·lular i 20% extracel·lular)."
   },
   {
    "text": "En una persona de 70 kg (42 L d'aigua), quants litres són intracel·lulars (40%)?",
@@ -1164,7 +1251,8 @@
    ],
    "correct": 2,
    "time": 20,
-   "points": "standard"
+   "points": "standard",
+   "explanation": "El 60% de 70 kg són 42 L d'aigua; el 40% d'aquesta aigua és intracel·lular, és a dir, 28 L."
   },
   {
    "text": "Quant és el volum extracel·lular aproximat d'una persona de 70 kg?",
@@ -1177,7 +1265,8 @@
    ],
    "correct": 0,
    "time": 20,
-   "points": "standard"
+   "points": "standard",
+   "explanation": "El volum extracel·lular és aproximadament el 20% del pes: uns 14 L (plasma més líquid intersticial)."
   },
   {
    "text": "Quin percentatge del líquid extracel·lular és plasma sanguini (intravascular)?",
@@ -1190,7 +1279,8 @@
    ],
    "correct": 2,
    "time": 20,
-   "points": "standard"
+   "points": "standard",
+   "explanation": "El plasma representa el 25% del volum extracel·lular (uns 4 L) i el líquid intersticial el 75% restant (uns 10 L)."
   },
   {
    "text": "Per quines dues vies retorna el fluid filtrat a la sang?",
@@ -1203,7 +1293,8 @@
    ],
    "correct": 0,
    "time": 20,
-   "points": "standard"
+   "points": "standard",
+   "explanation": "El fluid torna a la sang sobretot per reabsorció al final dels capil·lars i a les vènules, i l'excés el recullen els vasos limfàtics."
   },
   {
    "text": "On aboquen els vasos limfàtics l'excedent de fluid al sistema venós?",
@@ -1216,7 +1307,8 @@
    ],
    "correct": 2,
    "time": 20,
-   "points": "standard"
+   "points": "standard",
+   "explanation": "Els vasos limfàtics aboquen l'excedent de fluid intersticial al sistema venós, a l'altura de les venes subclàvies."
   },
   {
    "text": "Quin d'aquests és un dels 4 factors que contribueixen a l'edema?",
@@ -1229,7 +1321,8 @@
    ],
    "correct": 0,
    "time": 20,
-   "points": "standard"
+   "points": "standard",
+   "explanation": "Els quatre factors són: més pressió hidroestàtica o menys pressió oncòtica, més permeabilitat dels vasos, obstrucció del sistema limfàtic i canvis en la retenció d'aigua dels teixits."
   },
   {
    "text": "Una pressió oncòtica reduïda pot deure's a…",
@@ -1242,7 +1335,8 @@
    ],
    "correct": 3,
    "time": 25,
-   "points": "standard"
+   "points": "standard",
+   "explanation": "Una pressió oncòtica reduïda pot venir d'un defecte de síntesi de proteïnes plasmàtiques al fetge o d'una pèrdua excessiva de proteïnes pel ronyó, com en la síndrome nefròtica."
   },
   {
    "text": "Quina molècula produïda per mastòcits i basòfils causa l'edema inflamatori?",
@@ -1255,7 +1349,8 @@
    ],
    "correct": 3,
    "time": 20,
-   "points": "standard"
+   "points": "standard",
+   "explanation": "La histamina, produïda per mastòcits i basòfils, dilata les arterioles i augmenta la permeabilitat de les vènules, cosa que afavoreix la sortida de fluid plasmàtic."
   },
   {
    "text": "Com s'anomena la inflor general de tot el cos?",
@@ -1268,7 +1363,8 @@
    ],
    "correct": 2,
    "time": 20,
-   "points": "standard"
+   "points": "standard",
+   "explanation": "L'anasarca és la inflor general de tot el cos per una retenció anormal de líquids als teixits (edema massiu o generalitzat)."
   },
   {
    "text": "L'excés de quina substància causa la icterícia (imatge)?",
@@ -1281,7 +1377,8 @@
    ],
    "correct": 3,
    "time": 20,
-   "points": "standard"
+   "points": "standard",
+   "explanation": "La icterícia és causada per l'excés de bilirubina: un pigment groc procedent de l'hemoglobina que acumula la pell, l'escleròtica i les mucoses."
   },
   {
    "text": "Quin enzim oxida el grup hemo produint biliverdina, ferro i monòxid de carboni?",
@@ -1294,7 +1391,8 @@
    ],
    "correct": 1,
    "time": 25,
-   "points": "standard"
+   "points": "standard",
+   "explanation": "L'enzim microsomal hemo-oxigenasa oxida el grup hemo i produeix biliverdina (verda), ferro i monòxid de carboni."
   },
   {
    "text": "Quin pigment groc s'obté per reducció de la biliverdina?",
@@ -1307,7 +1405,8 @@
    ],
    "correct": 0,
    "time": 20,
-   "points": "standard"
+   "points": "standard",
+   "explanation": "La biliverdina es redueix amb l'enzim biliverdina reductasa i dóna bilirubina, un pigment tetrapirròlic groc."
   },
   {
    "text": "A quina proteïna s'uneix la bilirubina no conjugada per ser transportada al fetge?",
@@ -1320,7 +1419,8 @@
    ],
    "correct": 3,
    "time": 20,
-   "points": "standard"
+   "points": "standard",
+   "explanation": "La bilirubina no conjugada no és soluble: a la sang s'associa a l'albúmina sèrica per ser transportada fins al fetge."
   },
   {
    "text": "Amb quina substància es conjuga la bilirubina al fetge per fer-la soluble en aigua?",
@@ -1333,7 +1433,8 @@
    ],
    "correct": 1,
    "time": 20,
-   "points": "standard"
+   "points": "standard",
+   "explanation": "Al fetge la bilirubina es conjuga amb l'àcid glucurònic, cosa que la fa soluble en aigua (bilirubina conjugada)."
   },
   {
    "text": "Per quines vies s'excreta del fetge la bilirubina conjugada (imatge del fetge i vesícula)?",
@@ -1346,7 +1447,8 @@
    ],
    "correct": 3,
    "time": 20,
-   "points": "standard"
+   "points": "standard",
+   "explanation": "La bilirubina conjugada s'excreta del fetge pels conductes biliars, com a part de la bilis."
   },
   {
    "text": "Quin pigment és responsable del color de l'orina?",
@@ -1359,7 +1461,8 @@
    ],
    "correct": 2,
    "time": 20,
-   "points": "standard"
+   "points": "standard",
+   "explanation": "Una part de l'urobilinogen es converteix en urobilina, que s'excreta pels ronyons i dóna el color a l'orina."
   },
   {
    "text": "Quins productes donen el color a la femta?",
@@ -1372,7 +1475,8 @@
    ],
    "correct": 3,
    "time": 20,
-   "points": "standard"
+   "points": "standard",
+   "explanation": "Les estercobilines (80% de la bilirubina que arriba al còlon) s'eliminen amb la femta i en són responsables del color."
   },
   {
    "text": "Aquesta icterícia per destrucció d'eritròcits (anèmia hemolítica) és…",
@@ -1385,7 +1489,8 @@
    ],
    "correct": 2,
    "time": 20,
-   "points": "standard"
+   "points": "standard",
+   "explanation": "La icterícia pre-hepàtica es deu a l'alliberament de bilirubina no conjugada per destrucció d'eritròcits (anèmia hemolítica)."
   },
   {
    "text": "En la icterícia pre-hepàtica, com estan les transaminases i la fosfatasa alcalina?",
@@ -1398,7 +1503,8 @@
    ],
    "correct": 0,
    "time": 20,
-   "points": "standard"
+   "points": "standard",
+   "explanation": "En la icterícia pre-hepàtica els enzims indicadors de mal hepàtic (transaminases i fosfatasa alcalina) no estan alterats."
   },
   {
    "text": "Per què no hi ha colúria en la icterícia pre-hepàtica?",
@@ -1411,7 +1517,8 @@
    ],
    "correct": 0,
    "time": 25,
-   "points": "standard"
+   "points": "standard",
+   "explanation": "La bilirubina no conjugada no és soluble i no pot ser excretada pel ronyó, per això no hi ha colúria (orina fosca)."
   },
   {
    "text": "En la icterícia hepàtica, quins enzims s'eleven?",
@@ -1424,7 +1531,8 @@
    ],
    "correct": 0,
    "time": 20,
-   "points": "standard"
+   "points": "standard",
+   "explanation": "En la icterícia hepàtica els nivells d'ALAT i ASAT estan elevats; la fosfatasa alcalina només ho està si hi ha colèstasi."
   },
   {
    "text": "Quina causa pot tenir la icterícia post-hepàtica?",
@@ -1437,7 +1545,8 @@
    ],
    "correct": 1,
    "time": 20,
-   "points": "standard"
+   "points": "standard",
+   "explanation": "La icterícia post-hepàtica es deu a l'obstrucció del colèdoc (colèstasi), per exemple per un càlcul de la vesícula biliar o per la compressió d'un càncer de cap de pàncrees."
   },
   {
    "text": "Quant dura normalment la icterícia fisiològica del nounat?",
@@ -1450,7 +1559,8 @@
    ],
    "correct": 3,
    "time": 20,
-   "points": "standard"
+   "points": "standard",
+   "explanation": "La majoria dels nounats a terme tenen una hiperbilirubinèmia no conjugada que normalment es resol en una o dues setmanes (icterícia fisiològica), més freqüent en prematurs."
   },
   {
    "type": "title",
@@ -1469,7 +1579,8 @@
    ],
    "correct": 2,
    "time": 20,
-   "points": "standard"
+   "points": "standard",
+   "explanation": "L'hemostàsia és la detenció de l'hemorràgia d'un vas sanguini lesionat i requereix l'activitat combinada de factors vasculars, plaquetes i factors de coagulació plasmàtics."
   },
   {
    "text": "Quina és la primera reacció vascular immediata a la lesió (imatge)?",
@@ -1482,7 +1593,8 @@
    ],
    "correct": 1,
    "time": 20,
-   "points": "standard"
+   "points": "standard",
+   "explanation": "La vasoconstricció local és la reacció immediata a la lesió i redueix la pèrdua de sang abans que actuïn les plaquetes."
   },
   {
    "text": "Quins mediadors de l'endoteli promouen l'agregació plaquetària i dilaten els vasos intactes?",
@@ -1495,7 +1607,8 @@
    ],
    "correct": 1,
    "time": 25,
-   "points": "standard"
+   "points": "standard",
+   "explanation": "Segons la presentació, l'òxid nítric i la prostaciclina de les cèl·lules endotelials intervenen en l'agregació plaquetària i dilaten els vasos intactes; si l'endoteli es lesiona deixen de produir-se i les plaquetes s'hi adhereixen."
   },
   {
    "text": "Quin mediador d'agregació alliberen les plaquetes dels seus grànuls?",
@@ -1508,7 +1621,8 @@
    ],
    "correct": 2,
    "time": 20,
-   "points": "standard"
+   "points": "standard",
+   "explanation": "Les plaquetes activades alliberen mediadors d'agregació, com l'ADP (adenosina difosfat) dels grànuls d'emmagatzematge."
   },
   {
    "text": "Quin enzim plaquetari és inhibit de manera irreversible per l'aspirina?",
@@ -1521,7 +1635,8 @@
    ],
    "correct": 0,
    "time": 20,
-   "points": "standard"
+   "points": "standard",
+   "explanation": "L'aspirina inhibeix de manera irreversible la ciclooxigenasa plaquetària, l'enzim necessari per formar tromboxà A2."
   },
   {
    "text": "Quin àcid es converteix en tromboxà A2?",
@@ -1534,7 +1649,8 @@
    ],
    "correct": 2,
    "time": 20,
-   "points": "standard"
+   "points": "standard",
+   "explanation": "L'àcid araquidònic es converteix en tromboxà A2 gràcies a la ciclooxigenasa plaquetària."
   },
   {
    "text": "A quin complex s'uneix el fibrinogen per connectar plaquetes adjacents?",
@@ -1547,7 +1663,8 @@
    ],
    "correct": 0,
    "time": 20,
-   "points": "standard"
+   "points": "standard",
+   "explanation": "El fibrinogen s'uneix als complexos de glucoproteïna IIb/IIIa de plaquetes adjacents i les connecta per formar agregats."
   },
   {
    "text": "De quina cèl·lula de la medul·la òssia es formen les plaquetes (imatge)?",
@@ -1560,7 +1677,8 @@
    ],
    "correct": 1,
    "time": 20,
-   "points": "standard"
+   "points": "standard",
+   "explanation": "Les plaquetes es formen a la medul·la òssia per fragmentació del citoplasma dels megacariòcits (un en pot produir entre 2.000 i 4.000)."
   },
   {
    "text": "Quin complex es genera a la superfície de les plaquetes activades a la via comuna?",
@@ -1573,7 +1691,8 @@
    ],
    "correct": 3,
    "time": 20,
-   "points": "standard"
+   "points": "standard",
+   "explanation": "A la via comuna es genera una protrombinasa: un complex format per l'enzim factor Xa i el cofactor factor Va."
   },
   {
    "text": "Què fa la protrombinasa?",
@@ -1586,7 +1705,8 @@
    ],
    "correct": 0,
    "time": 20,
-   "points": "standard"
+   "points": "standard",
+   "explanation": "La protrombinasa degrada la protrombina en trombina, que després converteix el fibrinogen en fibrina."
   },
   {
    "text": "Quin factor catalitza enllaços covalents més resistents entre monòmers de fibrina?",
@@ -1599,7 +1719,8 @@
    ],
    "correct": 1,
    "time": 20,
-   "points": "standard"
+   "points": "standard",
+   "explanation": "La trombina activa el factor XIII, un enzim que catalitza la formació d'enllaços covalents més resistents entre monòmers de fibrina adjacents."
   },
   {
    "text": "Quin és un mecanisme que regula i frena la coagulació?",
@@ -1612,7 +1733,8 @@
    ],
    "correct": 3,
    "time": 20,
-   "points": "standard"
+   "points": "standard",
+   "explanation": "Per evitar una trombosi extensa hi ha mecanismes inhibitoris: inactivació dels factors de coagulació, fibrinòlisi i depuració hepàtica dels factors activats."
   },
   {
    "text": "Quin inhibidor de proteasa plasmàtic inhibeix la trombina i els factors Xa, XIa i IXa?",
@@ -1625,7 +1747,8 @@
    ],
    "correct": 1,
    "time": 20,
-   "points": "standard"
+   "points": "standard",
+   "explanation": "L'antitrombina inhibeix la trombina i els factors Xa, XIa i IXa."
   },
   {
    "text": "Quines dues proteïnes dependents de la vitamina K inactiven els factors VIIIa i Va?",
@@ -1638,7 +1761,8 @@
    ],
    "correct": 2,
    "time": 25,
-   "points": "standard"
+   "points": "standard",
+   "explanation": "La proteïna C i la proteïna S lliure, dependents de la vitamina K, formen un complex que inactiva els factors VIIIa i Va per proteòlisi."
   },
   {
    "text": "Quin fàrmac millora l'activitat de l'antitrombina per inactivar la trombina i el factor Xa?",
@@ -1651,7 +1775,8 @@
    ],
    "correct": 2,
    "time": 20,
-   "points": "standard"
+   "points": "standard",
+   "explanation": "L'heparina (no fraccionada i de baix pes molecular) millora l'activitat de l'antitrombina per inactivar la trombina (IIa) i el factor Xa."
   },
   {
    "text": "Quina d'aquestes és una heparina de baix pes molecular?",
@@ -1664,7 +1789,8 @@
    ],
    "correct": 1,
    "time": 20,
-   "points": "standard"
+   "points": "standard",
+   "explanation": "Les heparines de baix pes molecular inclouen l'enoxaparina, la dalteparina i la tinzaparina."
   },
   {
    "text": "Quin enzim proteolític dissol la fibrina (imatge)?",
@@ -1677,7 +1803,8 @@
    ],
    "correct": 2,
    "time": 20,
-   "points": "standard"
+   "points": "standard",
+   "explanation": "El sistema fibrinolític dissol la fibrina per mitjà de la plasmina, un enzim proteolític."
   },
   {
    "text": "Quina molècula s'activa a plasmina als activadors del plasminogen (imatge)?",
@@ -1690,7 +1817,8 @@
    ],
    "correct": 1,
    "time": 20,
-   "points": "standard"
+   "points": "standard",
+   "explanation": "Els activadors del plasminogen el converteixen en plasmina, que després degrada la fibrina."
   },
   {
    "text": "Quin és l'activador del plasminogen de les cèl·lules endotelials?",
@@ -1703,7 +1831,8 @@
    ],
    "correct": 1,
    "time": 20,
-   "points": "standard"
+   "points": "standard",
+   "explanation": "El tPA, de les cèl·lules endotelials, activa el plasminogen de manera eficient quan està unit a la fibrina."
   },
   {
    "text": "Quin activador del plasminogen és un producte bacterià que no es troba normalment al cos?",
@@ -1716,7 +1845,8 @@
    ],
    "correct": 1,
    "time": 20,
-   "points": "standard"
+   "points": "standard",
+   "explanation": "L'estreptocinasa és un producte bacterià que normalment no es troba al cos i actua com a potent activador del plasminogen."
   },
   {
    "text": "Quin és l'inhibidor principal de la plasmina?",
@@ -1729,7 +1859,8 @@
    ],
    "correct": 1,
    "time": 20,
-   "points": "standard"
+   "points": "standard",
+   "explanation": "L'alfa-2-antiplasmina és l'inhibidor principal de la plasmina: n'inactiva ràpidament la lliure que escapa dels coàguls."
   },
   {
    "text": "Què poden provocar les alteracions de l'hemostàsia?",
@@ -1742,7 +1873,8 @@
    ],
    "correct": 2,
    "time": 20,
-   "points": "standard"
+   "points": "standard",
+   "explanation": "Les alteracions hemostàtiques poden provocar una hemorràgia excessiva o una trombosi."
   }
  ]
 }

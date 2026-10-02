@@ -16,8 +16,11 @@ Juego de preguntas tipo Kahoot que se ejecuta **solo con archivos estáticos** (
 - Gamificación: puntos por rapidez (500–1000), bonus por racha de aciertos, preguntas ×2, clasificación tras cada pregunta, podio animado, premios (🔥 Racha, ⚡ Rayo, 🎯 Francotirador) y CSV de resultados.
 - Reconexión automática de jugadores que pierdan la conexión.
 
+## Música
+Durante la partida suena música de concurso sintetizada en el navegador (sin archivos de audio). Cada jugador puede silenciarla con el botón de altavoz de la barra superior; se recuerda en ese dispositivo.
+
 ## Idiomas
-Interfaz en catalán (por defecto), castellano, inglés, francés, italiano, ruso, chino simplificado y klingon (`tlhIngan Hol`, romanización estándar; traducción de mejor esfuerzo). Selector en la barra superior; la elección se guarda en el navegador. Las traducciones están en `i18n.js`. El host y los jugadores pueden usar idiomas distintos. El contenido de los cuestionarios no se traduce.
+Interfaz en catalán (por defecto), castellano, gallego, euskera, inglés, francés, alemán, italiano, polaco, ruso, árabe (RTL), hindi, chino simplificado, japonés y klingon (`tlhIngan Hol`, romanización estándar; traducción de mejor esfuerzo). Selector en la barra superior; la elección se guarda en el navegador. Las traducciones están en `i18n.js` y `i18n-extra.js`. El host y los jugadores pueden usar idiomas distintos. El contenido de los cuestionarios no se traduce.
 
 ## Formato JSON
 ```json
@@ -29,7 +32,7 @@ Interfaz en catalán (por defecto), castellano, inglés, francés, italiano, rus
   ]
 }
 ```
-`image`: `null`, una URL `https://…` o un data-URL `data:image/…`. `points`: `standard` | `double` | `none`. Para un separador: `{ "type": "title", "text": "Ronda 2", "subtitle": "opcional", "time": 4 }` (`time` en segundos, 2–30). Ver `examples/ejemplo.json` y `examples/tanatopraxia-uc1605-3.json` (132 preguntas con imágenes).
+`explanation` (opcional, máx. 500 caracteres): texto que se muestra en la pantalla de resultados con el porqué de la respuesta correcta; la pantalla dura más si el texto es largo. `image`: `null`, una URL `https://…` o un data-URL `data:image/…`. `points`: `standard` | `double` | `none`. Para un separador: `{ "type": "title", "text": "Ronda 2", "subtitle": "opcional", "time": 4 }` (`time` en segundos, 2–30). Ver `examples/ejemplo.json` y `examples/tanatopraxia-uc1605-3.json` (132 preguntas con imágenes).
 
 ## Notas técnicas
 - Señalización con el servidor público de PeerJS; para uno propio edita `config.js`. En redes muy restrictivas (sin STUN/TURN) algunos jugadores podrían no conectar.

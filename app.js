@@ -9,12 +9,14 @@ const STORE_KEY = 'questionari.quizzes.v1';
 const SHAPES = ['▲', '◆', '●', '■'];
 const MAX_NAME = 20;
 const REVEAL_SECS = 8;   // la pantalla de resultados pasa sola a la siguiente pregunta
+/** Segundos de la pantalla de resultados: 8 s, más tiempo de lectura si hay explicación (máx. 30 s). */
+const revealSecs = q => q.explanation ? clamp(REVEAL_SECS + Math.ceil(q.explanation.length / 18), REVEAL_SECS, 30) : REVEAL_SECS;
 
 /* ───────────── utilidades ───────────── */
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const uid = () => Math.random().toString(36).slice(2, 10);
 const $ = sel => document.querySelector(sel);
-const ic = (n, extra = '') => `<svg class="ic ${extra}" aria-hidden="true"><use href="#i-${n}"/></svg>`;
+const ic = (n, extra = '') => `<svg class="ic ${extra}${n === 'arrow' || n === 'back' ? ' ic-dir' : ''}" aria-hidden="true"><use href="#i-${n}"/></svg>`;
 const clamp = (n, a, b) => Math.min(b, Math.max(a, n));
 const sleep = ms => new Promise(r => setTimeout(r, ms));
 const slug = s => (s || 'quiz').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || 'quiz';
@@ -44,7 +46,7 @@ const store = {
   },
 };
 
-const blankQuestion = () => ({ id: uid(), text: '', image: null, options: ['', '', '', ''], correct: 0, time: 20, points: 'standard' });
+const blankQuestion = () => ({ id: uid(), text: '', image: null, options: ['', '', '', ''], correct: 0, time: 20, points: 'standard', explanation: '' });
 const blankSeparator = () => ({ id: uid(), type: 'title', text: '', subtitle: '', time: 4 });
 const isTitle = q => q.type === 'title';
 const realCount = quiz => quiz.questions.filter(q => !isTitle(q)).length;
@@ -72,7 +74,8 @@ function normalizeQuiz(raw) {
     const time = clamp(Math.round(Number(q.time)) || 20, 5, 120);
     const points = ['standard', 'double', 'none'].includes(q.points) ? q.points : 'standard';
     while (options.length < 2) options.push('');
-    return { id: uid(), text: q.text.trim(), image, options, correct, time, points };
+    const explanation = typeof q.explanation === 'string' ? q.explanation.trim().slice(0, 500) : '';
+    return { id: uid(), text: q.text.trim(), image, options, correct, time, points, explanation };
   });
   if (!questions.some(q => !isTitle(q))) throw new Error(t('imp.onlysep'));
   return { id: uid(), title: String(raw.title || t('imp.default')).slice(0, 120), description: String(raw.description || '').slice(0, 500), questions };
@@ -85,6 +88,7 @@ function exportable(quiz) {
       text: q.text, image: q.image || null,
       options: q.options.filter((o, i) => o.trim() || i === q.correct),
       correct: q.correct, time: q.time, points: q.points,
+      ...(q.explanation ? { explanation: q.explanation } : {}),
     })),
   };
 }
@@ -129,6 +133,7 @@ function render() {
   setupReveal(changed);
   if (changed) {
     runCounters();
+    updateMusic();
     if (ui.view === 'hostFinal' || ui.view === 'clientFinal') launchConfetti();
   }
 }
@@ -162,6 +167,7 @@ function runCounters() {
 function applyStatic() {
   const l = LANGS.find(x => x.code === LANG);
   document.documentElement.lang = l.html;
+  document.documentElement.dir = l.dir || 'ltr';
   document.querySelector('meta[name=description]').setAttribute('content', t('meta.desc'));
   document.querySelectorAll('[data-i18n]').forEach(el => { el.textContent = t(el.dataset.i18n); });
   document.querySelectorAll('[data-i18n-attr]').forEach(el => el.dataset.i18nAttr.split(';').forEach(pair => {
@@ -205,7 +211,8 @@ document.addEventListener('click', e => { if (!langList.hidden && !e.target.clos
 /** Cuestionario de ejemplo en el idioma actual. */
 function sampleQuiz() {
   const S = SAMPLES[LANG] || SAMPLES.ca;
-  const mk = ([text, options, correct], i, arr) => ({ text, image: null, options, correct, time: 20, points: i === arr.length - 1 && S.q.length > 3 ? 'double' : 'standard' });
+  const E = SAMPLE_EXPL[LANG] || SAMPLE_EXPL.ca;
+  const mk = ([text, options, correct], i, arr) => ({ text, image: null, options, correct, time: 20, points: i === arr.length - 1 && S.q.length > 3 ? 'double' : 'standard', explanation: E[i] || '' });
   const qs = S.q.map(mk);
   const sep = ([text, subtitle]) => ({ type: 'title', text, subtitle, time: 4 });
   return { format: 'questionari', version: 1, title: S.title, description: S.desc,
@@ -218,6 +225,25 @@ function effectiveTheme() {
 }
 function syncThemeIcon() { $('#theme-icon').setAttribute('href', effectiveTheme() === 'dark' ? '#i-sun' : '#i-moon'); }
 matchMedia('(prefers-color-scheme: dark)').addEventListener('change', syncThemeIcon);
+
+/* música de concurso: una pista por escena; el botón de la barra la silencia */
+function syncMusicIcon() {
+  const m = music.isMuted();
+  $('#music-icon').setAttribute('href', m ? '#i-volume-x' : '#i-volume');
+  $('#music-toggle').setAttribute('aria-pressed', String(!m));
+}
+const MUSIC_SCENE = { hostLobby: 'lobby', clientWait: 'lobby', hostTitle: 'lobby', clientTitle: 'lobby', hostQuestion: 'question', clientQuestion: 'question', hostReveal: 'reveal', clientReveal: 'reveal', hostFinal: 'final', clientFinal: 'final' };
+function updateMusic() {
+  const scene = MUSIC_SCENE[ui.view] || 'off';
+  if (scene === 'reveal') {
+    const r = ui.view === 'hostReveal' ? (game && game.players.get('host') && game.players.get('host').last) : (cli && cli.reveal);
+    music.sting(r ? (r.ok ? 'good' : r.answered ? 'bad' : 'neutral') : 'neutral');
+    music.set('reveal', { delay: 0.9 });
+  } else if (scene === 'final') {
+    music.fanfare(); music.set('final', { delay: 1.8 });
+  } else music.set(scene);
+}
+['pointerdown', 'keydown'].forEach(ev => document.addEventListener(ev, () => music.unlock(), { once: true, capture: true }));
 window.addEventListener('scroll', () => $('#topbar').classList.toggle('scrolled', scrollY > 8), { passive: true });
 
 const inGame = () => !!(game || cli);
@@ -225,6 +251,7 @@ function leaveGame() {
   if (game) { clearInterval(game.timer); try { broadcast({ t: 'end' }); } catch { } try { game.peer.destroy(); } catch { } game = null; }
   if (cli) { cli.closing = true; clearInterval(cli.timer); try { cli.peer.destroy(); } catch { } cli = null; }
   $('#conn-badge').textContent = '';
+  music.set('off');
 }
 window.addEventListener('beforeunload', e => { if (inGame()) { e.preventDefault(); e.returnValue = ''; } });
 
@@ -351,6 +378,8 @@ function editorQuestion(q, i, total, quiz) {
         ${q.options.length > 2 ? `<button class="btn sm danger" data-act="opt-del" data-i="${i}" data-j="${j}" aria-label="${esc(t('ed.opt.del'))}" title="${esc(t('ed.opt.del'))}">${ic('x')}</button>` : ''}
       </div>`).join('')}
     ${q.options.length < 4 ? `<button class="btn sm sec" data-act="opt-add" data-i="${i}">${ic('plus')} ${t('ed.opt.add')}</button>` : ''}
+    <label class="f">${t('ed.expl')}</label>
+    <textarea data-bind="q.expl" data-i="${i}" rows="2" maxlength="500" placeholder="${esc(t('ed.expl.ph'))}">${esc(q.explanation || '')}</textarea>
     <div class="opts-meta">
       <div><label class="f">${t('ed.time')}</label><select data-bind="q.time" data-i="${i}">${secs([5, 10, 15, 20, 30, 45, 60, 90, 120])}</select></div>
       <div><label class="f">${t('ed.points')}</label><select data-bind="q.points" data-i="${i}">
@@ -385,6 +414,7 @@ function compactQuiz(quiz) {
     q.correct = keep.findIndex(x => x.j === q.correct);
     q.options = keep.map(x => x.o);
     q.text = q.text.trim();
+    q.explanation = (q.explanation || '').trim();
   });
   copy.title = copy.title.trim();
   return copy;
@@ -621,9 +651,10 @@ function endQuestion() {
   });
   g.dist = dist;
   g.top = ranked().slice(0, 5).map(p => ({ name: p.name, score: p.score }));
-  g.revealDeadline = Date.now() + REVEAL_SECS * 1000;
+  const rs = revealSecs(q);
+  g.revealDeadline = Date.now() + rs * 1000;
   clearTimeout(g.timer);
-  g.timer = setTimeout(() => { if (game === g && g.state === 'reveal') nextStep(); }, REVEAL_SECS * 1000);
+  g.timer = setTimeout(() => { if (game === g && g.state === 'reveal') nextStep(); }, rs * 1000);
   g.players.forEach(p => { if (p.conn) safeSend(p.conn, revealPayload(p)); });
   go('hostReveal');
 }
@@ -632,7 +663,7 @@ const noMoreQuestions = () => !game.quiz.questions.slice(game.qIndex + 1).some(q
 
 function revealPayload(p) {
   const g = game;
-  return { t: 'reveal', index: g.qIndex, correct: g.quiz.questions[g.qIndex].correct, ...p.last, score: p.score, streak: p.streak, rank: p.rank, prevRank: p.prevRank, players: g.players.size, top: g.top, dist: g.dist, last: noMoreQuestions(), wait: Math.max(0, (g.revealDeadline - Date.now()) / 1000) };
+  return { t: 'reveal', index: g.qIndex, correct: g.quiz.questions[g.qIndex].correct, ...p.last, score: p.score, streak: p.streak, rank: p.rank, prevRank: p.prevRank, players: g.players.size, top: g.top, dist: g.dist, last: noMoreQuestions(), explanation: g.quiz.questions[g.qIndex].explanation || '', wait: Math.max(0, (g.revealDeadline - Date.now()) / 1000) };
 }
 
 function computeAwards() {
@@ -740,6 +771,7 @@ views.hostReveal = () => {
     <div class="qtext">${esc(q.text)}</div>
     <div class="dist">${g.dist.map((n, j) => `<div class="b"><span>${n}</span><i style="background:var(--c${j});height:${Math.round(n / max * 100)}%;opacity:${j === q.correct ? 1 : .45}"></i></div>`).join('')}</div>
     ${answerButtons(q, { interactive: false, correct: q.correct })}
+    ${q.explanation ? `<div class="explain">${ic('lightbulb')}<div><b>${t('reveal.why')}</b><p>${esc(q.explanation)}</p></div></div>` : ''}
     ${me && me.last ? `<div class="big-result ${me.last.ok ? 'good' : 'bad'}" style="margin-top:14px"><h2>${ic(me.last.ok ? 'check-circle' : 'x-circle')} ${me.last.ok ? t('reveal.correct') + ' +' + me.last.gained : me.last.answered ? t('reveal.wrong') : t('reveal.noanswer')}</h2>${me.streak >= 2 ? `<span class="pill">${ic('flame')} ${t('reveal.streak', { n: me.streak })}</span>` : ''}</div>` : ''}
     <h3 style="margin-top:20px">${t('reveal.board')}</h3>
     ${boardHtml(g.top, null)}
@@ -920,7 +952,8 @@ views.clientReveal = () => {
       ${r.streak >= 2 ? `<span class="pill">${ic('flame')} ${t('reveal.streak', { n: r.streak })}</span>` : ''}
     </div>
     <div class="qtext" style="font-size:1.1rem;border-top-color:var(--c${r.correct})"><span class="muted">${t('reveal.right')}</span> <span style="color:var(--c${r.correct})">${SHAPES[r.correct]} ${esc(q.options[r.correct])}</span></div>
-    <p class="rankline">${t('reveal.rank', { r: r.rank, moved, n: r.players })} · <span data-count="${r.score}" data-suffix=" ${esc(t('pts.short'))}">${r.score} ${t('pts.short')}</span></p>
+    ${r.explanation ? `<div class="explain">${ic('lightbulb')}<div><b>${t('reveal.why')}</b><p>${esc(r.explanation)}</p></div></div>` : ''}
+    <p class="rankline" style="margin-top:var(--s4)">${t('reveal.rank', { r: r.rank, moved, n: r.players })} · <span data-count="${r.score}" data-suffix=" ${esc(t('pts.short'))}">${r.score} ${t('pts.short')}</span></p>
     ${boardHtml(r.top, c.name)}
     <div class="tbar" style="max-width:420px;margin:20px auto 8px" aria-hidden="true"><div class="title-fill" style="animation-duration:${Math.max(0.1, r.wait ?? 8)}s"></div></div>
     <p class="muted">${r.last ? t('reveal.finalin') : t('reveal.nextin')}</p>
@@ -962,6 +995,10 @@ function launchConfetti() {
 
 /* ───────────── acciones (clics) ───────────── */
 const actions = {
+  music() {
+    const muted = music.toggle();
+    syncMusicIcon(); toast(t(muted ? 'music.off' : 'music.on'));
+  },
   theme() {
     const next = effectiveTheme() === 'dark' ? 'light' : 'dark';
     document.documentElement.dataset.theme = next;
@@ -1081,6 +1118,7 @@ document.addEventListener('input', e => {
   const q = z.questions[+t.dataset.i];
   if (b === 'q.text') q.text = t.value;
   else if (b === 'q.subtitle') q.subtitle = t.value;
+  else if (b === 'q.expl') q.explanation = t.value;
   else if (b === 'q.opt') q.options[+t.dataset.j] = t.value;
 });
 document.addEventListener('change', e => {
@@ -1135,5 +1173,6 @@ document.addEventListener('submit', async e => {
 });
 
 syncThemeIcon();
+syncMusicIcon();
 applyStatic();
 render();
