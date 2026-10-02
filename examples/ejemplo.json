@@ -1,0 +1,12 @@
+{
+  "format": "questionari",
+  "version": 1,
+  "title": "Cultura general (ejemplo)",
+  "description": "Cuestionario de ejemplo para probar la aplicación",
+  "questions": [
+    { "text": "¿Cuál es la capital de Francia?", "image": null, "options": ["Madrid", "París", "Roma", "Berlín"], "correct": 1, "time": 15, "points": "standard" },
+    { "text": "¿Cuántos planetas tiene el Sistema Solar?", "image": null, "options": ["7", "8", "9", "10"], "correct": 1, "time": 20, "points": "standard" },
+    { "text": "El agua hierve a 100 °C al nivel del mar.", "image": null, "options": ["Verdadero", "Falso"], "correct": 0, "time": 10, "points": "standard" },
+    { "text": "¿Quién pintó La Gioconda? (pregunta doble)", "image": null, "options": ["Picasso", "Van Gogh", "Leonardo da Vinci", "Dalí"], "correct": 2, "time": 20, "points": "double" }
+  ]
+}
