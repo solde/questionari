@@ -328,3 +328,23 @@ const VOL_I18N = {
   tlh: `QoQ ghogh`,
 };
 Object.keys(VOL_I18N).forEach(l => { I18N[l]['music.vol'] = VOL_I18N[l]; });
+
+/* botón de modo claro/oscuro dentro del selector de temas */
+const MODE_I18N = {
+  ca: { 'theme.toLight': `Mode clar`, 'theme.toDark': `Mode fosc` },
+  es: { 'theme.toLight': `Modo claro`, 'theme.toDark': `Modo oscuro` },
+  gl: { 'theme.toLight': `Modo claro`, 'theme.toDark': `Modo escuro` },
+  eu: { 'theme.toLight': `Modu argia`, 'theme.toDark': `Modu iluna` },
+  en: { 'theme.toLight': `Light mode`, 'theme.toDark': `Dark mode` },
+  fr: { 'theme.toLight': `Mode clair`, 'theme.toDark': `Mode sombre` },
+  de: { 'theme.toLight': `Heller Modus`, 'theme.toDark': `Dunkler Modus` },
+  it: { 'theme.toLight': `Modalità chiara`, 'theme.toDark': `Modalità scura` },
+  pl: { 'theme.toLight': `Tryb jasny`, 'theme.toDark': `Tryb ciemny` },
+  ru: { 'theme.toLight': `Светлая тема`, 'theme.toDark': `Тёмная тема` },
+  ar: { 'theme.toLight': `الوضع الفاتح`, 'theme.toDark': `الوضع الداكن` },
+  hi: { 'theme.toLight': `लाइट मोड`, 'theme.toDark': `डार्क मोड` },
+  zh: { 'theme.toLight': `浅色模式`, 'theme.toDark': `深色模式` },
+  ja: { 'theme.toLight': `ライトモード`, 'theme.toDark': `ダークモード` },
+  tlh: { 'theme.toLight': `wov`, 'theme.toDark': `qIj` },
+};
+Object.keys(MODE_I18N).forEach(l => Object.assign(I18N[l], MODE_I18N[l]));

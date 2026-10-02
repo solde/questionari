@@ -25,8 +25,8 @@ Al crear la sala se elige **Partida en directo** o **Examen**.
 - Las respuestas correctas y explicaciones no salen del host hasta que el alumno entrega.
 
 ## Temas de color
-El botón de la paleta (barra superior) ofrece el diseño por defecto y 21 esquemas populares: Dracula, Nord, Solarized (claro/oscuro), Gruvbox (claro/oscuro), Monokai, One Dark/Light, Tokyo Night, Catppuccin (Mocha/Latte), Rosé Pine (+ Dawn), GitHub (claro/oscuro), Night Owl, Material Palenight, Everforest (claro/oscuro) y un tema de alto contraste. El botón sol/luna cambia al tema pareja (claro ↔ oscuro) cuando existe. La elección se recuerda en el navegador.
-`themes.css` y `themes.js` se generan con `python3 tools/gen-themes.py`, que además ajusta los colores para cumplir contraste WCAG AA; para añadir un tema, añade su paleta en ese script y vuelve a ejecutarlo.
+Un único control en la barra superior (icono de paleta) reúne el **desplegable de temas** y el **botón de modo claro/oscuro**. El tema (diseño por defecto, Dracula, Nord, Solarized, Gruvbox, Monokai, Atom One, Tokyo Night, Catppuccin, Rosé Pine, GitHub, Night Owl, Material Palenight, Everforest y Alto contraste) es independiente del modo: cada uno tiene variante clara y oscura, y el botón cambia entre ambas conservando el tema. Si no se ha elegido modo, se sigue el del sistema. Todo se recuerda en el navegador.
+`themes.css` y `themes.js` se generan con `python3 tools/gen-themes.py`, que ajusta los colores para cumplir contraste WCAG AA; para añadir un tema, añade las dos paletas (clara y oscura) en ese script y vuelve a ejecutarlo.
 
 ## Música
 Durante la partida suena música de concurso sintetizada en el navegador (sin archivos de audio). Cada jugador ajusta el volumen con el control deslizante de la barra superior (el altavoz silencia y restaura el último volumen); se recuerda en ese dispositivo.

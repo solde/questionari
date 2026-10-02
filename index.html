@@ -79,14 +79,16 @@
       <ul class="lang-list" id="lang-list" role="listbox" tabindex="-1" hidden></ul>
     </div>
     <div class="scheme" id="scheme" translate="no">
-      <button class="icon-btn" id="scheme-btn" type="button" aria-haspopup="listbox" aria-expanded="false" aria-controls="scheme-list" data-i18n-attr="aria-label:theme.pick;title:theme.pick" aria-label="Theme"><svg class="ic" aria-hidden="true"><use href="#i-palette"/></svg></button>
-      <ul class="scheme-list" id="scheme-list" role="listbox" tabindex="-1" hidden></ul>
+      <button class="icon-btn" id="scheme-btn" type="button" aria-haspopup="true" aria-expanded="false" aria-controls="scheme-panel" data-i18n-attr="aria-label:theme.pick;title:theme.pick" aria-label="Theme"><svg class="ic" aria-hidden="true"><use href="#i-palette"/></svg></button>
+      <div class="scheme-panel" id="scheme-panel" hidden>
+        <button class="btn sec mode-btn" id="mode-btn" type="button"><svg class="ic" aria-hidden="true"><use id="mode-icon" href="#i-moon"/></svg><span id="mode-label"></span></button>
+        <ul class="scheme-list" id="scheme-list" role="listbox" aria-label="Theme" data-i18n-attr="aria-label:theme.pick"></ul>
+      </div>
     </div>
     <div class="vol" id="vol">
       <button class="icon-btn" id="music-toggle" data-act="music" type="button" data-i18n-attr="aria-label:music.aria;title:music.aria" aria-label="Music" aria-pressed="true"><svg class="ic" aria-hidden="true"><use id="music-icon" href="#i-volume"/></svg></button>
       <input type="range" id="vol-range" min="0" max="100" step="1" value="50" data-i18n-attr="aria-label:music.vol" aria-label="Volume">
     </div>
-    <button class="icon-btn" id="theme-toggle" data-act="theme" type="button" data-i18n-attr="aria-label:theme.aria;title:theme.aria" aria-label="Light / dark"><svg class="ic" aria-hidden="true"><use id="theme-icon" href="#i-moon"/></svg></button>
   </div>
 </header>
 

@@ -235,9 +235,6 @@ function sampleQuiz() {
 }
 
 /* tema claro / oscuro (auto por defecto, interruptor manual guardado) */
-function effectiveTheme() {
-  return document.documentElement.dataset.theme || (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
-}
 /** En la pantalla de preparación: el examen oculta "yo también juego" (el host solo podrá hacerlo si está solo en la sala). */
 function syncSetup() {
   const exam = ($('input[name=mode]:checked') || {}).value === 'exam';
@@ -246,41 +243,41 @@ function syncSetup() {
 }
 document.addEventListener('change', e => { if (e.target.name === 'mode' || e.target.id === 'host-plays') syncSetup(); });
 
-/* selector de temas de color (esquemas populares) */
+/* selector de temas: familia de colores (desplegable) + botón de modo claro/oscuro, en un mismo control */
+const DEFAULT_SW = { light: ['#f6f4ff', '#6d3bf2', '#c026d3', '#1b1740'], dark: ['#0b0a1e', '#7c4dff', '#d946ef', '#f1efff'] };
+const schemeBtn = $('#scheme-btn'), schemePanel = $('#scheme-panel'), schemeList = $('#scheme-list'), modeBtn = $('#mode-btn');
 function buildSchemeMenu() {
-  const cur = currentScheme();
+  const cur = currentFamily(), mode = currentMode();
   const item = (id, label, sw) => `<li role="option" data-scheme="${id}" tabindex="-1" aria-selected="${id === cur}"><span class="sw" style="--a:${sw[0]};--b:${sw[1]};--c:${sw[2]};--d:${sw[3]}"></span><span>${esc(label)}</span>${id === cur ? ic('check') : ''}</li>`;
-  const name = th => th.id === 'contrast' ? t('theme.hc') : th.name;
-  const group = mode => THEMES.filter(x => x.mode === mode).map(x => item(x.id, name(x), x.sw)).join('');
-  $('#scheme-list').innerHTML = item('quiz', t('theme.default'), ['#f6f4ff', '#6d3bf2', '#c026d3', '#1b1740'])
-    + `<li class="grp" role="presentation">${t('theme.dark')}</li>${group('dark')}<li class="grp" role="presentation">${t('theme.light')}</li>${group('light')}`;
+  schemeList.innerHTML = item('quiz', t('theme.default'), DEFAULT_SW[mode])
+    + FAMILIES.map(f => item(f.id, f.id === 'contrast' ? t('theme.hc') : f.name, f.sw[mode])).join('');
+  const dark = mode === 'dark';
+  $('#mode-icon').setAttribute('href', dark ? '#i-sun' : '#i-moon');
+  $('#mode-label').textContent = t(dark ? 'theme.toLight' : 'theme.toDark');
 }
-const schemeBtn = $('#scheme-btn'), schemeList = $('#scheme-list');
 function schemeOpen(open, focusSel) {
-  schemeList.hidden = !open; schemeBtn.setAttribute('aria-expanded', String(open));
-  if (open && focusSel) (schemeList.querySelector('[aria-selected=true]') || schemeList.querySelector('[role=option]')).focus();
+  schemePanel.hidden = !open; schemeBtn.setAttribute('aria-expanded', String(open));
+  if (open && focusSel) (schemeList.querySelector('[aria-selected=true]') || modeBtn).focus();
 }
-function schemeChoose(id) {
-  schemeOpen(false); schemeBtn.focus();
-  applyScheme(id); syncThemeIcon(); buildSchemeMenu();
-}
-schemeBtn.addEventListener('click', () => { schemeOpen(schemeList.hidden, true); if (!schemeList.hidden) langOpen(false); });
+function schemeChoose(id) { schemeOpen(false); schemeBtn.focus(); applyScheme(id); buildSchemeMenu(); }
+function toggleMode() { applyScheme(currentFamily(), currentMode() === 'dark' ? 'light' : 'dark'); buildSchemeMenu(); }
+schemeBtn.addEventListener('click', () => { schemeOpen(schemePanel.hidden, true); if (!schemePanel.hidden) langOpen(false); });
 schemeBtn.addEventListener('keydown', e => { if (e.key === 'ArrowDown' || e.key === 'ArrowUp') { e.preventDefault(); schemeOpen(true, true); } });
+modeBtn.addEventListener('click', toggleMode);
 schemeList.addEventListener('click', e => { const li = e.target.closest('[data-scheme]'); if (li) schemeChoose(li.dataset.scheme); });
-schemeList.addEventListener('keydown', e => {
+schemePanel.addEventListener('keydown', e => {
+  if (e.key === 'Escape') { e.preventDefault(); schemeOpen(false); schemeBtn.focus(); return; }
   const items = [...schemeList.querySelectorAll('[role=option]')], i = items.indexOf(document.activeElement);
+  if (i < 0) return;
   if (e.key === 'ArrowDown') { e.preventDefault(); items[(i + 1) % items.length].focus(); }
   else if (e.key === 'ArrowUp') { e.preventDefault(); items[(i - 1 + items.length) % items.length].focus(); }
   else if (e.key === 'Home') { e.preventDefault(); items[0].focus(); }
   else if (e.key === 'End') { e.preventDefault(); items[items.length - 1].focus(); }
-  else if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); if (i >= 0) schemeChoose(items[i].dataset.scheme); }
-  else if (e.key === 'Escape') { e.preventDefault(); schemeOpen(false); schemeBtn.focus(); }
-  else if (e.key === 'Tab') schemeOpen(false);
+  else if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); schemeChoose(items[i].dataset.scheme); }
 });
-document.addEventListener('click', e => { if (!schemeList.hidden && !e.target.closest('#scheme')) schemeOpen(false); });
-
-function syncThemeIcon() { $('#theme-icon').setAttribute('href', effectiveTheme() === 'dark' ? '#i-sun' : '#i-moon'); }
-matchMedia('(prefers-color-scheme: dark)').addEventListener('change', syncThemeIcon);
+schemePanel.addEventListener('focusout', e => { if (e.relatedTarget && !schemePanel.contains(e.relatedTarget) && e.relatedTarget !== schemeBtn) schemeOpen(false); });
+document.addEventListener('click', e => { if (!schemePanel.hidden && !e.target.closest('#scheme')) schemeOpen(false); });
+if (window.matchMedia) matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => buildSchemeMenu());
 
 /* música de concurso: una pista por escena; el botón de la barra la silencia */
 function syncMusicIcon() {
@@ -1329,13 +1326,6 @@ const actions = {
     const muted = music.toggle();
     syncMusicIcon(); toast(t(muted ? 'music.off' : 'music.on'));
   },
-  theme() {
-    const cur = currentScheme(), th = themeById(cur);
-    if (cur === 'quiz') applyScheme('quiz', { mode: effectiveTheme() === 'dark' ? 'light' : 'dark' });
-    else if (th.pair) applyScheme(th.pair);                                   // temas sin pareja (p. ej. Dracula) vuelven al diseño por defecto
-    else applyScheme('quiz', { mode: th.mode === 'dark' ? 'light' : 'dark' });
-    syncThemeIcon(); buildSchemeMenu();
-  },
   home() {
     if (inGame() && !(cli && cli.final) && ui.view !== 'hostFinal' && ui.view !== 'clientReport' && !confirm(t('leave.confirm'))) return;
     leaveGame(); ui.joinError = ''; history.replaceState(null, '', location.pathname); go('home');
@@ -1517,7 +1507,7 @@ document.addEventListener('submit', async e => {
   }
 });
 
-syncThemeIcon();
+buildSchemeMenu();
 syncMusicIcon();
 applyStatic();
 render();
