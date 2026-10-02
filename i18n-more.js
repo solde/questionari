@@ -588,3 +588,6 @@ const MORE_I18N = {
   },
 };
 Object.keys(MORE_I18N).forEach(l => Object.assign(I18N[l], MORE_I18N[l]));
+
+const TPL_LABEL = {"ca": "Plantilles", "es": "Plantillas", "gl": "Modelos", "eu": "Txantiloiak", "en": "Templates", "fr": "Modèles", "it": "Modelli", "de": "Vorlagen", "pl": "Szablony", "ru": "Шаблоны", "ar": "القوالب", "hi": "टेम्पलेट", "ja": "テンプレート", "zh": "模板", "tlh": "chenmoHmey"};
+Object.keys(TPL_LABEL).forEach(l => { if (I18N[l]) I18N[l]['lib.templates'] = TPL_LABEL[l]; });

@@ -453,12 +453,13 @@ views.home = () => {
 views.library = () => `
   <div class="page-head">
     <h1>${t('lib.title')}</h1>
-    <div class="row">
+    <div class="row lib-actions">
       <button class="btn" data-act="new">${ic('plus')} ${t('lib.new')}</button>
       <label class="btn sec" tabindex="0">${ic('download')} ${t('lib.import')}<input type="file" id="import-file" accept=".json,.csv,application/json,text/csv" multiple hidden></label>
       <button class="btn sec" data-act="toggle-paste">${ic('clipboard')} ${t('lib.paste')}</button>
-      <button class="btn sec" data-act="template">${ic('file')} ${t('lib.template')}</button>
-      <button class="btn sec" data-act="template-csv">${ic('file')} ${t('lib.template.csv')}</button>
+      <details class="dd" id="tpl-dd"><summary class="btn sec">${ic('file')} ${t('lib.templates')} ${ic('chevron')}</summary>
+        <div class="dd-menu"><button class="btn sec" data-act="template">${ic('file')} ${t('lib.template')}</button>
+        <button class="btn sec" data-act="template-csv">${ic('file')} ${t('lib.template.csv')}</button></div></details>
       ${ui.quizzes.length ? `<button class="btn sec" data-act="export-all">${ic('upload')} ${t('lib.exportall')}</button>` : ''}
     </div>
   </div>
@@ -1596,6 +1597,9 @@ function launchConfetti() {
   })(t0);
 }
 
+const closeTpl = () => { const d = $('#tpl-dd'); if (d) d.open = false; };
+document.addEventListener('click', e => { if (!e.target.closest('#tpl-dd')) closeTpl(); });
+
 /* ───────────── acciones (clics) ───────────── */
 const actions = {
   music() {
@@ -1628,8 +1632,9 @@ const actions = {
   },
   'toggle-paste'() { ui.showPaste = !ui.showPaste; render(); },
   'import-paste'() { importText($('#paste-json').value); },
-  'template-csv'() { download('quiz-template.csv', csvTemplate(), 'text/csv;charset=utf-8'); },
+  'template-csv'() { closeTpl(); download('quiz-template.csv', csvTemplate(), 'text/csv;charset=utf-8'); },
   template() {
+    closeTpl();
     download('quiz-template.json', JSON.stringify(templateQuiz(), null, 2));
   },
   sample() {
