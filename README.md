@@ -24,6 +24,10 @@ Al crear la sala se elige **Partida en directo** o **Examen**.
 - Al entregar, el alumno ve en pantalla **solo su informe** (nota, aciertos, errores, en blanco, tiempos y revisión pregunta a pregunta) y puede descargarlo en **CSV** (pregunta, respuesta dada, respuesta correcta, resultado, explicación y tiempo). El host puede descargar el CSV de cada alumno o uno con todos.
 - Las respuestas correctas y explicaciones no salen del host hasta que el alumno entrega.
 
+## Temas de color
+El botón de la paleta (barra superior) ofrece el diseño por defecto y 21 esquemas populares: Dracula, Nord, Solarized (claro/oscuro), Gruvbox (claro/oscuro), Monokai, One Dark/Light, Tokyo Night, Catppuccin (Mocha/Latte), Rosé Pine (+ Dawn), GitHub (claro/oscuro), Night Owl, Material Palenight, Everforest (claro/oscuro) y un tema de alto contraste. El botón sol/luna cambia al tema pareja (claro ↔ oscuro) cuando existe. La elección se recuerda en el navegador.
+`themes.css` y `themes.js` se generan con `python3 tools/gen-themes.py`, que además ajusta los colores para cumplir contraste WCAG AA; para añadir un tema, añade su paleta en ese script y vuelve a ejecutarlo.
+
 ## Música
 Durante la partida suena música de concurso sintetizada en el navegador (sin archivos de audio). Cada jugador puede silenciarla con el botón de altavoz de la barra superior; se recuerda en ese dispositivo.
 

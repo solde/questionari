@@ -288,3 +288,23 @@ const TEMPLATE_I18N = {
   tlh: `JSON ngoD yInob`,
 };
 Object.keys(TEMPLATE_I18N).forEach(l => { I18N[l]['lib.template'] = TEMPLATE_I18N[l]; });
+
+/* selector de temas de color */
+const THEME_I18N = {
+  ca: { 'theme.pick': `Elegeix un tema de colors`, 'theme.default': `Predeterminat`, 'theme.hc': `Alt contrast`, 'theme.dark': `Foscos`, 'theme.light': `Clars` },
+  es: { 'theme.pick': `Elegir un tema de colores`, 'theme.default': `Predeterminado`, 'theme.hc': `Alto contraste`, 'theme.dark': `Oscuros`, 'theme.light': `Claros` },
+  gl: { 'theme.pick': `Escoller un tema de cores`, 'theme.default': `Predeterminado`, 'theme.hc': `Alto contraste`, 'theme.dark': `Escuros`, 'theme.light': `Claros` },
+  eu: { 'theme.pick': `Aukeratu kolore-gai bat`, 'theme.default': `Lehenetsia`, 'theme.hc': `Kontraste handia`, 'theme.dark': `Ilunak`, 'theme.light': `Argiak` },
+  en: { 'theme.pick': `Choose a color theme`, 'theme.default': `Default`, 'theme.hc': `High contrast`, 'theme.dark': `Dark`, 'theme.light': `Light` },
+  fr: { 'theme.pick': `Choisir un thème de couleurs`, 'theme.default': `Par défaut`, 'theme.hc': `Contraste élevé`, 'theme.dark': `Sombres`, 'theme.light': `Clairs` },
+  de: { 'theme.pick': `Farbschema wählen`, 'theme.default': `Standard`, 'theme.hc': `Hoher Kontrast`, 'theme.dark': `Dunkel`, 'theme.light': `Hell` },
+  it: { 'theme.pick': `Scegli un tema di colori`, 'theme.default': `Predefinito`, 'theme.hc': `Alto contrasto`, 'theme.dark': `Scuri`, 'theme.light': `Chiari` },
+  pl: { 'theme.pick': `Wybierz motyw kolorystyczny`, 'theme.default': `Domyślny`, 'theme.hc': `Wysoki kontrast`, 'theme.dark': `Ciemne`, 'theme.light': `Jasne` },
+  ru: { 'theme.pick': `Выбрать цветовую тему`, 'theme.default': `По умолчанию`, 'theme.hc': `Высокий контраст`, 'theme.dark': `Тёмные`, 'theme.light': `Светлые` },
+  ar: { 'theme.pick': `اختر سمة الألوان`, 'theme.default': `الافتراضي`, 'theme.hc': `تباين عالٍ`, 'theme.dark': `داكنة`, 'theme.light': `فاتحة` },
+  hi: { 'theme.pick': `रंग थीम चुनें`, 'theme.default': `डिफ़ॉल्ट`, 'theme.hc': `उच्च कंट्रास्ट`, 'theme.dark': `गहरे`, 'theme.light': `हल्के` },
+  zh: { 'theme.pick': `选择配色主题`, 'theme.default': `默认`, 'theme.hc': `高对比度`, 'theme.dark': `深色`, 'theme.light': `浅色` },
+  ja: { 'theme.pick': `カラーテーマを選択`, 'theme.default': `デフォルト`, 'theme.hc': `ハイコントラスト`, 'theme.dark': `ダーク`, 'theme.light': `ライト` },
+  tlh: { 'theme.pick': `wov qIj nguv yIwIv`, 'theme.default': `motlh`, 'theme.hc': `wov law'`, 'theme.dark': `qIj`, 'theme.light': `wov` },
+};
+Object.keys(THEME_I18N).forEach(l => Object.assign(I18N[l], THEME_I18N[l]));

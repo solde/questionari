@@ -173,6 +173,7 @@ function applyStatic() {
   document.querySelectorAll('[data-i18n-attr]').forEach(el => el.dataset.i18nAttr.split(';').forEach(pair => {
     const [attr, key] = pair.split(':'); el.setAttribute(attr, t(key));
   }));
+  buildSchemeMenu();
   const cur = LANGS.find(x => x.code === LANG);
   $('#lang-flag').innerHTML = FLAGS[LANG];
   $('#lang-name').textContent = cur.name;
@@ -192,7 +193,7 @@ function langChoose(code) {
   if (code === LANG) return;
   setLang(code); applyStatic(); render();
 }
-langBtn.addEventListener('click', () => langOpen(langList.hidden, true));
+langBtn.addEventListener('click', () => { langOpen(langList.hidden, true); if (!langList.hidden) schemeOpen(false); });
 langBtn.addEventListener('keydown', e => { if (e.key === 'ArrowDown' || e.key === 'ArrowUp') { e.preventDefault(); langOpen(true, true); } });
 langList.addEventListener('click', e => { const li = e.target.closest('[data-lang]'); if (li) langChoose(li.dataset.lang); });
 langList.addEventListener('keydown', e => {
@@ -244,6 +245,39 @@ function syncSetup() {
   $('#host-name-wrap').style.display = !exam && !$('#host-plays').checked ? 'none' : '';
 }
 document.addEventListener('change', e => { if (e.target.name === 'mode' || e.target.id === 'host-plays') syncSetup(); });
+
+/* selector de temas de color (esquemas populares) */
+function buildSchemeMenu() {
+  const cur = currentScheme();
+  const item = (id, label, sw) => `<li role="option" data-scheme="${id}" tabindex="-1" aria-selected="${id === cur}"><span class="sw" style="--a:${sw[0]};--b:${sw[1]};--c:${sw[2]};--d:${sw[3]}"></span><span>${esc(label)}</span>${id === cur ? ic('check') : ''}</li>`;
+  const name = th => th.id === 'contrast' ? t('theme.hc') : th.name;
+  const group = mode => THEMES.filter(x => x.mode === mode).map(x => item(x.id, name(x), x.sw)).join('');
+  $('#scheme-list').innerHTML = item('quiz', t('theme.default'), ['#f6f4ff', '#6d3bf2', '#c026d3', '#1b1740'])
+    + `<li class="grp" role="presentation">${t('theme.dark')}</li>${group('dark')}<li class="grp" role="presentation">${t('theme.light')}</li>${group('light')}`;
+}
+const schemeBtn = $('#scheme-btn'), schemeList = $('#scheme-list');
+function schemeOpen(open, focusSel) {
+  schemeList.hidden = !open; schemeBtn.setAttribute('aria-expanded', String(open));
+  if (open && focusSel) (schemeList.querySelector('[aria-selected=true]') || schemeList.querySelector('[role=option]')).focus();
+}
+function schemeChoose(id) {
+  schemeOpen(false); schemeBtn.focus();
+  applyScheme(id); syncThemeIcon(); buildSchemeMenu();
+}
+schemeBtn.addEventListener('click', () => { schemeOpen(schemeList.hidden, true); if (!schemeList.hidden) langOpen(false); });
+schemeBtn.addEventListener('keydown', e => { if (e.key === 'ArrowDown' || e.key === 'ArrowUp') { e.preventDefault(); schemeOpen(true, true); } });
+schemeList.addEventListener('click', e => { const li = e.target.closest('[data-scheme]'); if (li) schemeChoose(li.dataset.scheme); });
+schemeList.addEventListener('keydown', e => {
+  const items = [...schemeList.querySelectorAll('[role=option]')], i = items.indexOf(document.activeElement);
+  if (e.key === 'ArrowDown') { e.preventDefault(); items[(i + 1) % items.length].focus(); }
+  else if (e.key === 'ArrowUp') { e.preventDefault(); items[(i - 1 + items.length) % items.length].focus(); }
+  else if (e.key === 'Home') { e.preventDefault(); items[0].focus(); }
+  else if (e.key === 'End') { e.preventDefault(); items[items.length - 1].focus(); }
+  else if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); if (i >= 0) schemeChoose(items[i].dataset.scheme); }
+  else if (e.key === 'Escape') { e.preventDefault(); schemeOpen(false); schemeBtn.focus(); }
+  else if (e.key === 'Tab') schemeOpen(false);
+});
+document.addEventListener('click', e => { if (!schemeList.hidden && !e.target.closest('#scheme')) schemeOpen(false); });
 
 function syncThemeIcon() { $('#theme-icon').setAttribute('href', effectiveTheme() === 'dark' ? '#i-sun' : '#i-moon'); }
 matchMedia('(prefers-color-scheme: dark)').addEventListener('change', syncThemeIcon);
@@ -1260,7 +1294,7 @@ views.clientFinal = () => {
   <div class="stage">
     <h1 class="grad-text">${medal} ${t('final.rank', { r: y.rank })}</h1>
     <p class="rankline">${t('final.stats', { score: y.score, c: y.correct, total: y.total, s: y.maxStreak })}</p>
-    ${mine.length ? `<p>${mine.map(a => `<span class="pill" style="background:var(--grad);color:#fff">${ic(a.icon)} ${t('award.' + a.key)}</span>`).join('')}</p>` : ''}
+    ${mine.length ? `<p>${mine.map(a => `<span class="pill" style="background:var(--grad);color:var(--on-brand)">${ic(a.icon)} ${t('award.' + a.key)}</span>`).join('')}</p>` : ''}
     ${podiumHtml(f.ranking)}
     ${awardsHtml(f.awards)}
     <h3>${t('final.board')}</h3>
@@ -1273,7 +1307,8 @@ views.clientFinal = () => {
 function launchConfetti() {
   const cv = $('#confetti'), ctx = cv.getContext('2d');
   cv.width = innerWidth; cv.height = innerHeight;
-  const cols = ['#e21b3c', '#1368ce', '#ffd02f', '#26890c', '#fff', '#ff6bcb'];
+  const css = getComputedStyle(document.documentElement), v = n => css.getPropertyValue(n).trim() || '#fff';
+  const cols = ['--c0', '--c1', '--c2', '--c3', '--brand-hi', '--text'].map(v);
   const ps = Array.from({ length: 140 }, () => ({ x: Math.random() * cv.width, y: -20 - Math.random() * cv.height * .6, w: 6 + Math.random() * 6, h: 8 + Math.random() * 8, vy: 2 + Math.random() * 3, vx: -1.5 + Math.random() * 3, r: Math.random() * 6, vr: -.2 + Math.random() * .4, c: cols[Math.floor(Math.random() * cols.length)] }));
   const t0 = performance.now();           // el confeti arranca con la aparición del 1.º puesto
   (function frame(now) {
@@ -1292,10 +1327,11 @@ const actions = {
     syncMusicIcon(); toast(t(muted ? 'music.off' : 'music.on'));
   },
   theme() {
-    const next = effectiveTheme() === 'dark' ? 'light' : 'dark';
-    document.documentElement.dataset.theme = next;
-    try { localStorage.setItem('quizsolde.theme', next); } catch { }
-    syncThemeIcon();
+    const cur = currentScheme(), th = themeById(cur);
+    if (cur === 'quiz') applyScheme('quiz', { mode: effectiveTheme() === 'dark' ? 'light' : 'dark' });
+    else if (th.pair) applyScheme(th.pair);                                   // temas sin pareja (p. ej. Dracula) vuelven al diseño por defecto
+    else applyScheme('quiz', { mode: th.mode === 'dark' ? 'light' : 'dark' });
+    syncThemeIcon(); buildSchemeMenu();
   },
   home() {
     if (inGame() && !(cli && cli.final) && ui.view !== 'hostFinal' && ui.view !== 'clientReport' && !confirm(t('leave.confirm'))) return;
