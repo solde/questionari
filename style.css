@@ -385,6 +385,19 @@ input[type=checkbox] { accent-color: var(--brand); }
 .hero-shapes .s3 { right: 14%; bottom: 14%; width: 36px; height: 36px; background: var(--c3); border-radius: 8px; animation-delay: -1s; }
 @media (max-width: 700px) { .hero-shapes { display: none; } }
 
-/* selector de idioma */
-.lang-select { width: auto; min-height: 44px; padding: 6px 34px 6px 14px; border-radius: var(--radius-full); font-weight: 600; font-size: var(--text-sm); cursor: pointer; background-color: var(--surface); }
-@media (max-width: 480px) { .lang-select { max-width: 120px; padding-left: 10px; } #conn-badge { display: none; } }
+/* selector de idioma con banderas */
+.flag { width: 24px; height: 16px; border-radius: 3px; box-shadow: 0 0 0 1px rgba(0, 0, 0, .18); flex: none; display: block; }
+.lang { position: relative; }
+.lang-btn { display: inline-flex; align-items: center; gap: var(--s2); min-height: 44px; padding: 6px 12px; border-radius: var(--radius-full); border: 1px solid var(--line); background: var(--surface); color: var(--text); font: 600 var(--text-sm) var(--font-ui); cursor: pointer; transition: border-color .2s, transform .2s var(--ease-out); }
+.lang-btn:hover { border-color: var(--brand); }
+.lang-btn[aria-expanded=true] .ic { transform: rotate(180deg); }
+.lang-btn .ic { transition: transform .25s var(--ease-out); }
+.lang-list { position: absolute; right: 0; top: calc(100% + 8px); z-index: 50; min-width: 210px; margin: 0; padding: 6px; list-style: none; max-height: 70vh; overflow: auto; background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius-md); box-shadow: var(--shadow-lg); transform-origin: top right; animation: menuIn .2s var(--ease-out); }
+.lang-list[hidden] { display: none; }
+.lang-list li { display: flex; align-items: center; gap: 10px; min-height: 44px; padding: 8px 12px; border-radius: var(--radius-sm); cursor: pointer; font-weight: 500; }
+.lang-list li span { flex: 1; }
+.lang-list li:hover, .lang-list li:focus { background: var(--surface-2); outline: none; }
+.lang-list li:focus-visible { outline: 3px solid var(--brand-3); outline-offset: -3px; }
+.lang-list li[aria-selected=true] { font-weight: 700; color: var(--link); }
+@keyframes menuIn { from { opacity: 0; transform: scale(.96) translateY(-4px); } to { opacity: 1; transform: none; } }
+@media (max-width: 480px) { .lang-name { display: none; } .lang-btn { padding: 6px 10px; } #conn-badge { display: none; } }

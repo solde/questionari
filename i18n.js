@@ -551,6 +551,24 @@ const SAMPLES = {
     [`tlhIngan juH pong 'oH nuq?`, [`Qo'noS`, `tera'`, `vulqan`, `romulus`], 0]] },
 };
 
+
+/* banderas en SVG (los emojis de bandera no se muestran en Windows). Todas con proporción 3:2. */
+const starPts = (cx, cy, r, rot = -90) => Array.from({ length: 10 }, (_, i) => {
+  const a = (rot + i * 36) * Math.PI / 180, rr = i % 2 ? r * 0.382 : r;
+  return (cx + rr * Math.cos(a)).toFixed(2) + ',' + (cy + rr * Math.sin(a)).toFixed(2);
+}).join(' ');
+const FLAGS = {
+  ca: `<svg class="flag" viewBox="0 0 36 24" aria-hidden="true"><rect width="36" height="24" fill="#fcdd09"/>${[1, 3, 5, 7].map(i => `<rect y="${(i * 24 / 9).toFixed(2)}" width="36" height="${(24 / 9).toFixed(2)}" fill="#da121a"/>`).join('')}</svg>`,
+  es: `<svg class="flag" viewBox="0 0 30 20" aria-hidden="true"><rect width="30" height="20" fill="#aa151b"/><rect y="5" width="30" height="10" fill="#f1bf00"/></svg>`,
+  en: `<svg class="flag" viewBox="0 0 60 40" aria-hidden="true"><rect width="60" height="40" fill="#012169"/><path d="M0 0 60 40M60 0 0 40" stroke="#fff" stroke-width="8"/><path d="M0 0 60 40M60 0 0 40" stroke="#c8102e" stroke-width="3"/><path d="M30 0v40M0 20h60" stroke="#fff" stroke-width="13"/><path d="M30 0v40M0 20h60" stroke="#c8102e" stroke-width="8"/></svg>`,
+  fr: `<svg class="flag" viewBox="0 0 30 20" aria-hidden="true"><rect width="10" height="20" fill="#0055a4"/><rect x="10" width="10" height="20" fill="#fff"/><rect x="20" width="10" height="20" fill="#ef4135"/></svg>`,
+  it: `<svg class="flag" viewBox="0 0 30 20" aria-hidden="true"><rect width="10" height="20" fill="#009246"/><rect x="10" width="10" height="20" fill="#fff"/><rect x="20" width="10" height="20" fill="#ce2b37"/></svg>`,
+  ru: `<svg class="flag" viewBox="0 0 30 20" aria-hidden="true"><rect width="30" height="20" fill="#fff"/><rect y="6.67" width="30" height="6.67" fill="#0039a6"/><rect y="13.33" width="30" height="6.67" fill="#d52b1e"/></svg>`,
+  zh: `<svg class="flag" viewBox="0 0 30 20" aria-hidden="true"><rect width="30" height="20" fill="#de2910"/><polygon points="${starPts(5, 5, 3)}" fill="#ffde00"/><polygon points="${starPts(10, 2, 1, -70)}" fill="#ffde00"/><polygon points="${starPts(12, 4, 1, -40)}" fill="#ffde00"/><polygon points="${starPts(12, 7, 1, -15)}" fill="#ffde00"/><polygon points="${starPts(10, 9, 1, 15)}" fill="#ffde00"/></svg>`,
+  /* emblema del Imperio Klingon (trifolio) sobre fondo oscuro */
+  tlh: `<svg class="flag" viewBox="0 0 60 40" aria-hidden="true"><rect width="60" height="40" fill="#14110f"/><g fill="#d4d0c8">${[0, 120, 240].map(a => `<polygon transform="rotate(${a} 30 20)" points="30,3 35,16 30,13 25,16"/>`).join('')}<circle cx="30" cy="20" r="3" fill="#b3201a"/></g></svg>`,
+};
+
 let LANG = 'ca';
 try { const s = localStorage.getItem('quizsolde.lang'); if (s && I18N[s]) LANG = s; } catch { }
 

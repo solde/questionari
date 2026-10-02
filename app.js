@@ -167,16 +167,40 @@ function applyStatic() {
   document.querySelectorAll('[data-i18n-attr]').forEach(el => el.dataset.i18nAttr.split(';').forEach(pair => {
     const [attr, key] = pair.split(':'); el.setAttribute(attr, t(key));
   }));
-  const sel = $('#lang-select');
-  if (!sel.options.length) sel.innerHTML = LANGS.map(x => `<option value="${x.code}" lang="${x.html}">${x.name}</option>`).join('');
-  sel.value = LANG;
+  const cur = LANGS.find(x => x.code === LANG);
+  $('#lang-flag').innerHTML = FLAGS[LANG];
+  $('#lang-name').textContent = cur.name;
+  $('#lang-list').innerHTML = LANGS.map(x => `<li role="option" id="lang-opt-${x.code}" data-lang="${x.code}" lang="${x.html}" tabindex="-1" aria-selected="${x.code === LANG}">${FLAGS[x.code]}<span>${x.name}</span>${x.code === LANG ? ic('check') : ''}</li>`).join('');
   const b = $('#conn-badge');
   if (game) b.textContent = t('badge.room', { code: game.code }); else if (cli) b.textContent = t('badge.room', { code: cli.code });
 }
-document.addEventListener('change', e => {
-  if (e.target.id !== 'lang-select') return;
-  setLang(e.target.value); applyStatic(); render();
+/* selector de idioma con banderas (lista desplegable accesible) */
+const langBtn = $('#lang-btn'), langList = $('#lang-list');
+function langOpen(open, focusSel) {
+  langList.hidden = !open;
+  langBtn.setAttribute('aria-expanded', String(open));
+  if (open && focusSel) (langList.querySelector('[aria-selected=true]') || langList.firstElementChild).focus();
+}
+function langChoose(code) {
+  langOpen(false); langBtn.focus();
+  if (code === LANG) return;
+  setLang(code); applyStatic(); render();
+}
+langBtn.addEventListener('click', () => langOpen(langList.hidden, true));
+langBtn.addEventListener('keydown', e => { if (e.key === 'ArrowDown' || e.key === 'ArrowUp') { e.preventDefault(); langOpen(true, true); } });
+langList.addEventListener('click', e => { const li = e.target.closest('[data-lang]'); if (li) langChoose(li.dataset.lang); });
+langList.addEventListener('keydown', e => {
+  const items = [...langList.children], i = items.indexOf(document.activeElement);
+  if (e.key === 'ArrowDown') { e.preventDefault(); items[(i + 1) % items.length].focus(); }
+  else if (e.key === 'ArrowUp') { e.preventDefault(); items[(i - 1 + items.length) % items.length].focus(); }
+  else if (e.key === 'Home') { e.preventDefault(); items[0].focus(); }
+  else if (e.key === 'End') { e.preventDefault(); items[items.length - 1].focus(); }
+  else if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); if (i >= 0) langChoose(items[i].dataset.lang); }
+  else if (e.key === 'Escape') { e.preventDefault(); langOpen(false); langBtn.focus(); }
+  else if (e.key === 'Tab') langOpen(false);
 });
+document.addEventListener('click', e => { if (!langList.hidden && !e.target.closest('#lang')) langOpen(false); });
+
 
 /** Cuestionario de ejemplo en el idioma actual. */
 function sampleQuiz() {
