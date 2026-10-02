@@ -384,3 +384,7 @@ input[type=checkbox] { accent-color: var(--brand); }
 .hero-shapes .s2 { left: 12%; bottom: 8%; width: 38px; height: 38px; background: var(--c2); border-radius: 50%; animation-delay: -4s; }
 .hero-shapes .s3 { right: 14%; bottom: 14%; width: 36px; height: 36px; background: var(--c3); border-radius: 8px; animation-delay: -1s; }
 @media (max-width: 700px) { .hero-shapes { display: none; } }
+
+/* selector de idioma */
+.lang-select { width: auto; min-height: 44px; padding: 6px 34px 6px 14px; border-radius: var(--radius-full); font-weight: 600; font-size: var(--text-sm); cursor: pointer; background-color: var(--surface); }
+@media (max-width: 480px) { .lang-select { max-width: 120px; padding-left: 10px; } #conn-badge { display: none; } }

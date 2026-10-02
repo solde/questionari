@@ -16,6 +16,9 @@ Juego de preguntas tipo Kahoot que se ejecuta **solo con archivos estáticos** (
 - Gamificación: puntos por rapidez (500–1000), bonus por racha de aciertos, preguntas ×2, clasificación tras cada pregunta, podio animado, premios (🔥 Racha, ⚡ Rayo, 🎯 Francotirador) y CSV de resultados.
 - Reconexión automática de jugadores que pierdan la conexión.
 
+## Idiomas
+Interfaz en catalán (por defecto), castellano, inglés, francés, italiano, ruso, chino simplificado y klingon (`tlhIngan Hol`, romanización estándar; traducción de mejor esfuerzo). Selector en la barra superior; la elección se guarda en el navegador. Las traducciones están en `i18n.js`. El host y los jugadores pueden usar idiomas distintos. El contenido de los cuestionarios no se traduce.
+
 ## Formato JSON
 ```json
 {

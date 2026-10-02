@@ -1,10 +1,10 @@
 <!doctype html>
-<html lang="es">
+<html lang="ca">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>quiz.solde.cat</title>
-<meta name="description" content="Juego de preguntas tipo Kahoot: crea cuestionarios con imágenes, comparte un código y compite con podio y premios.">
+<meta name="description" content="Joc de preguntes tipus Kahoot: crea qüestionaris amb imatges, comparteix un codi i competeix amb podi i premis.">
 <meta name="theme-color" content="#6d3bf2">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='24' fill='%236d3bf2'/><text x='50' y='70' font-size='62' text-anchor='middle' fill='white' font-family='sans-serif' font-weight='700'>?</text></svg>">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -64,27 +64,30 @@
 </svg>
 
 <header class="topbar" id="topbar">
-  <a href="#" class="brand" data-act="home" aria-label="quiz.solde.cat, inicio">
+  <a href="#" class="brand" data-act="home" data-i18n-attr="aria-label:brand.aria" aria-label="quiz.solde.cat">
     <span class="brand-mark"><svg class="ic" aria-hidden="true"><use href="#i-help"/></svg></span>
     <span>quiz.<b>solde.cat</b></span>
   </a>
   <div class="top-actions">
     <span id="conn-badge" aria-live="polite"></span>
-    <button class="icon-btn" id="theme-toggle" data-act="theme" type="button" aria-label="Cambiar entre modo claro y oscuro" title="Modo claro / oscuro"><svg class="ic" aria-hidden="true"><use id="theme-icon" href="#i-moon"/></svg></button>
+    <label class="sr-only" for="lang-select" data-i18n="lang.label">Idioma</label>
+    <select id="lang-select" class="lang-select" translate="no"></select>
+    <button class="icon-btn" id="theme-toggle" data-act="theme" type="button" data-i18n-attr="aria-label:theme.aria;title:theme.aria" aria-label="Light / dark"><svg class="ic" aria-hidden="true"><use id="theme-icon" href="#i-moon"/></svg></button>
   </div>
 </header>
 
 <main id="app"></main>
 
 <footer class="footer">
-  <span>quiz.solde.cat · juego de preguntas sin servidor ·
-  <a href="https://github.com/solde/questionari" target="_blank" rel="noopener">Código en GitHub</a></span>
+  <span data-i18n="footer.text">quiz.solde.cat</span> ·
+  <a href="https://github.com/solde/questionari" target="_blank" rel="noopener" data-i18n="footer.code">GitHub</a>
 </footer>
 
 <div id="toasts" role="status" aria-live="polite"></div>
 <canvas id="confetti" aria-hidden="true"></canvas>
 <script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
 <script src="config.js"></script>
+<script src="i18n.js"></script>
 <script src="app.js"></script>
 </body>
 </html>
