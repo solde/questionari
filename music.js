@@ -4,7 +4,7 @@
 
 const music = (() => {
   const KEY = 'quizsolde.volume', OLD_KEY = 'quizsolde.music';   // OLD_KEY: preferencia antigua (solo silenciar)
-  const BPM = { lobby: 112, question: 132, reveal: 104, final: 124 };   // tempo por escena
+  const BPM = { menu: 76, lobby: 112, question: 132, reveal: 104, final: 124 };   // tempo por escena
   const MAX_GAIN = 0.64;                                                // ganancia con el volumen al 100 % (al 50 % = 0,16, como antes)
   let ctx = null, master = null, noiseBuf = null, mode = 'off', step = 0, next = 0, timer = null;
   let volume = 0.5, lastVolume = 0.5;                                   // 0 = silenciado
@@ -58,12 +58,23 @@ const music = (() => {
   const Q_CHORDS = [[57, 'm'], [53, 'M'], [55, 'M'], [52, 'm']];      // La m · Fa · Sol · Mi m  (tensión)
   const L_CHORDS = [[48, 'M'], [53, 'M'], [55, 'M'], [48, 'M']];      // Do · Fa · Sol · Do      (alegre)
   const IV = { m: [0, 3, 7, 12], M: [0, 4, 7, 12] };
+  const M_CHORDS = [[51, [0, 4, 7, 11]], [48, [0, 3, 7, 10]], [53, [0, 3, 7, 10]], [46, [0, 4, 7, 10]]];   // Mi♭maj7 · Do m7 · Fa m7 · Si♭7 (suave, tipo lo-fi)
+  const M_ARP = [2, 0, 1, 3, 1, 2, 0, 3];
   const ARP_Q = [0, 1, 2, 3, 2, 1, 2, 3, 0, 1, 2, 3, 2, 3, 1, 2];
   const ARP_L = [0, 2, 1, 3, 2, 1, 3, 2, 0, 2, 1, 3, 3, 2, 1, 0];
 
   function voice(m, s, t, sd) {
     const bar = Math.floor(s / 16) % 4, st = s % 16;
-    if (m === 'question') {
+    if (m === 'menu') {
+      const [root, iv] = M_CHORDS[bar];
+      const swing = st % 2 ? sd * 0.18 : 0;                                               // swing ligero
+      if (st === 0) { [0, 2, 3].forEach(k => osc('sine', hz(root + 12 + iv[k]), t, sd * 15, 0.07)); }   // colchón
+      if (st === 0 || st === 10) osc('sine', hz(root - 12), t, sd * 5, 0.5);              // bajo suave
+      if (st === 0) kick(t, 0.22);
+      if (st === 8) noise(t, 0.12, 0.07, 1500);                                           // chasquido amortiguado
+      if (st % 4 === 2) noise(t, 0.03, 0.035, 8000);
+      if ([2, 3, 6, 7, 10, 12, 14].includes(st)) osc('triangle', hz(root + 24 + iv[M_ARP[(bar * 3 + st) % 8] % 4]), t + swing, sd * 2.6, 0.13);   // piano eléctrico
+    } else if (m === 'question') {
       const [root, q] = Q_CHORDS[bar];
       if (st % 2 === 0) osc('triangle', hz(root - 12), t, sd * 1.9, 0.55);                // bajo pulsante
       if (st === 0 || st === 8) kick(t, 0.5);

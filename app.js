@@ -392,8 +392,9 @@ function syncMusicIcon() {
 }
 $('#vol-range').addEventListener('input', e => { music.setVolume(e.target.value / 100); syncMusicIcon(); });
 const MUSIC_SCENE = { hostLobby: 'lobby', clientWait: 'lobby', hostTitle: 'lobby', clientTitle: 'lobby', hostQuestion: 'question', clientQuestion: 'question', hostReveal: 'reveal', clientReveal: 'reveal', hostFinal: 'final', clientFinal: 'final' };
+const QUIET_VIEWS = new Set(['hostExam', 'clientExam', 'clientReport']);   // el examen se hace en silencio
 function updateMusic() {
-  const scene = MUSIC_SCENE[ui.view] || 'off';
+  const scene = MUSIC_SCENE[ui.view] || (QUIET_VIEWS.has(ui.view) ? 'off' : 'menu');
   if (scene === 'reveal') {
     const r = ui.view === 'hostReveal' ? (game && game.players.get('host') && game.players.get('host').last) : (cli && cli.reveal);
     music.sting(r ? (r.ok ? 'good' : r.answered ? 'bad' : 'neutral') : 'neutral');
