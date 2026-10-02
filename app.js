@@ -208,6 +208,20 @@ langList.addEventListener('keydown', e => {
 document.addEventListener('click', e => { if (!langList.hidden && !e.target.closest('#lang')) langOpen(false); });
 
 
+/** Plantilla descargable: un separador y una pregunta de ejemplo, con todos los campos, lista para editar e importar. */
+function templateQuiz() {
+  const sep = (SAMPLES[LANG] || SAMPLES.ca).r1;
+  return {
+    _help: 'questions: array of items. Question: text, options (2-4), correct (index of the right option, 0 = first), time (5-120 s), points (standard | double | none), image (null, https://... or data:image/...), explanation (optional). Separator: { "type": "title", "text", "subtitle", "time" (2-30 s) }.',
+    format: 'questionari', version: 1,
+    title: t('ed.title'), description: t('ed.desc'),
+    questions: [
+      { type: 'title', text: sep[0], subtitle: sep[1], time: 4 },
+      { text: t('ed.q.ph'), image: null, options: [1, 2, 3, 4].map(n => t('ed.opt.ph', { n })), correct: 1, time: 20, points: 'standard', explanation: t('ed.expl.ph') },
+    ],
+  };
+}
+
 /** Cuestionario de ejemplo en el idioma actual. */
 function sampleQuiz() {
   const S = SAMPLES[LANG] || SAMPLES.ca;
@@ -305,6 +319,7 @@ views.library = () => `
       <button class="btn" data-act="new">${ic('plus')} ${t('lib.new')}</button>
       <label class="btn sec" tabindex="0">${ic('download')} ${t('lib.import')}<input type="file" id="import-file" accept=".json,application/json" multiple hidden></label>
       <button class="btn sec" data-act="toggle-paste">${ic('clipboard')} ${t('lib.paste')}</button>
+      <button class="btn sec" data-act="template">${ic('file')} ${t('lib.template')}</button>
       ${ui.quizzes.length ? `<button class="btn sec" data-act="export-all">${ic('upload')} ${t('lib.exportall')}</button>` : ''}
     </div>
   </div>
@@ -1308,6 +1323,9 @@ const actions = {
   },
   'toggle-paste'() { ui.showPaste = !ui.showPaste; render(); },
   'import-paste'() { importText($('#paste-json').value); },
+  template() {
+    download('quiz-template.json', JSON.stringify(templateQuiz(), null, 2));
+  },
   sample() {
     try { importText(JSON.stringify(sampleQuiz())); } catch { toast(t('sample.fail'), true); }
   },

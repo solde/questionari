@@ -31,6 +31,8 @@ Durante la partida suena música de concurso sintetizada en el navegador (sin ar
 Interfaz en catalán (por defecto), castellano, gallego, euskera, inglés, francés, alemán, italiano, polaco, ruso, árabe (RTL), hindi, chino simplificado, japonés y klingon (`tlhIngan Hol`, romanización estándar; traducción de mejor esfuerzo). Selector en la barra superior; la elección se guarda en el navegador. Las traducciones están en `i18n.js` y `i18n-extra.js`. El host y los jugadores pueden usar idiomas distintos. El contenido de los cuestionarios no se traduce.
 
 ## Formato JSON
+En *Mis cuestionarios* → **Descargar plantilla JSON** se obtiene un archivo con un separador y una pregunta de ejemplo (todos los campos), listo para editar e importar.
+
 ```json
 {
   "format": "questionari", "version": 1,

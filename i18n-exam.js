@@ -269,3 +269,22 @@ const EXAM3_I18N = {
   tlh: { 'exam.duration': `poH: {time}`, 'exam.left': `poH`, 'exam.timeup': `poH Hutlh! chov nobta'.` },
 };
 Object.keys(EXAM3_I18N).forEach(l => Object.assign(I18N[l], EXAM3_I18N[l]));
+
+const TEMPLATE_I18N = {
+  ca: `Descarrega la plantilla JSON`,
+  es: `Descargar plantilla JSON`,
+  gl: `Descargar modelo JSON`,
+  eu: `Deskargatu JSON txantiloia`,
+  en: `Download JSON template`,
+  fr: `Télécharger le modèle JSON`,
+  de: `JSON-Vorlage herunterladen`,
+  it: `Scarica il modello JSON`,
+  pl: `Pobierz szablon JSON`,
+  ru: `Скачать шаблон JSON`,
+  ar: `تنزيل قالب JSON`,
+  hi: `JSON टेम्पलेट डाउनलोड करें`,
+  zh: `下载 JSON 模板`,
+  ja: `JSONテンプレートをダウンロード`,
+  tlh: `JSON ngoD yInob`,
+};
+Object.keys(TEMPLATE_I18N).forEach(l => { I18N[l]['lib.template'] = TEMPLATE_I18N[l]; });
