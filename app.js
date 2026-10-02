@@ -8,11 +8,13 @@ const PREFIX = 'questionari-';
 const STORE_KEY = 'questionari.quizzes.v1';
 const SHAPES = ['▲', '◆', '●', '■'];
 const MAX_NAME = 20;
+const REVEAL_SECS = 8;   // la pantalla de resultados pasa sola a la siguiente pregunta
 
 /* ───────────── utilidades ───────────── */
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const uid = () => Math.random().toString(36).slice(2, 10);
 const $ = sel => document.querySelector(sel);
+const ic = (n, extra = '') => `<svg class="ic ${extra}" aria-hidden="true"><use href="#i-${n}"/></svg>`;
 const clamp = (n, a, b) => Math.min(b, Math.max(a, n));
 const sleep = ms => new Promise(r => setTimeout(r, ms));
 const slug = s => (s || 'cuestionario').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || 'cuestionario';
@@ -116,12 +118,53 @@ const ui = { view: 'home', quizzes: store.load(), editing: null, setupQuizId: nu
 let game = null;   // estado del host
 let cli = null;    // estado del cliente
 
+let lastView = null, enterNext = false, revealObs = null;
 function render() {
   const v = views[ui.view];
+  const changed = enterNext || ui.view !== lastView;
+  enterNext = false; lastView = ui.view;
   $app.innerHTML = v ? v() : '';
-  if (ui.view === 'hostFinal' || ui.view === 'clientFinal') launchConfetti();
+  $app.classList.remove('view-enter');
+  if (changed) { void $app.offsetWidth; $app.classList.add('view-enter'); }
+  setupReveal(changed);
+  if (changed) {
+    runCounters();
+    if (ui.view === 'hostFinal' || ui.view === 'clientFinal') launchConfetti();
+  }
 }
-function go(view) { ui.view = view; render(); window.scrollTo(0, 0); }
+function go(view) { ui.view = view; enterNext = true; render(); window.scrollTo(0, 0); }
+
+/** Revelado al hacer scroll: una sola vez por elemento. */
+function setupReveal(fresh) {
+  const els = $app.querySelectorAll('.reveal');
+  if (!els.length) return;
+  if (!fresh || !('IntersectionObserver' in window)) { els.forEach(e => e.classList.add('in')); return; }
+  revealObs = revealObs || new IntersectionObserver(entries => entries.forEach(e => {
+    if (e.isIntersecting) { e.target.classList.add('in'); revealObs.unobserve(e.target); }
+  }), { threshold: 0.12 });
+  els.forEach(e => revealObs.observe(e));
+}
+
+/** Contadores que suben hasta su valor (el texto ya contiene el valor final). */
+function runCounters() {
+  if (matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  $app.querySelectorAll('[data-count]').forEach(el => {
+    const to = +el.dataset.count, pre = el.dataset.prefix || '', suf = el.dataset.suffix || '', t0 = performance.now(), dur = 800;
+    (function step(now) {
+      const k = Math.min(1, (now - t0) / dur), e = 1 - Math.pow(1 - k, 3);
+      el.textContent = pre + Math.round(to * e) + suf;
+      if (k < 1) requestAnimationFrame(step);
+    })(t0);
+  });
+}
+
+/* tema claro / oscuro (auto por defecto, interruptor manual guardado) */
+function effectiveTheme() {
+  return document.documentElement.dataset.theme || (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+}
+function syncThemeIcon() { $('#theme-icon').setAttribute('href', effectiveTheme() === 'dark' ? '#i-sun' : '#i-moon'); }
+matchMedia('(prefers-color-scheme: dark)').addEventListener('change', syncThemeIcon);
+window.addEventListener('scroll', () => $('#topbar').classList.toggle('scrolled', scrollY > 8), { passive: true });
 
 const inGame = () => !!(game || cli);
 function leaveGame() {
@@ -137,83 +180,97 @@ const views = {};
 views.home = () => {
   const prefill = new URLSearchParams(location.search).get('join') || '';
   return `
-  <div class="hero"><h1>¡Preguntas, retos y podio!</h1><p>Crea tu cuestionario, comparte el código y juega en directo.</p></div>
+  <section class="hero">
+    <div class="hero-shapes" aria-hidden="true"><i class="s0"></i><i class="s1"></i><i class="s2"></i><i class="s3"></i></div>
+    <h1>Preguntas, retos y <span class="grad-text">podio</span></h1>
+    <p>Crea tu cuestionario, comparte el código y juega en directo con tu clase o tus amigos. Sin registros ni servidores.</p>
+  </section>
   <div class="grid2">
-    <div class="card">
-      <h2>🎤 Crear / alojar partida</h2>
-      <p class="muted">Crea cuestionarios con imágenes, impórtalos o expórtalos en JSON y lanza una partida.</p>
-      <button class="btn big" data-act="library">Mis cuestionarios</button>
-    </div>
-    <form class="card" data-form="join">
-      <h2>🎮 Unirse a una partida</h2>
-      <label class="f">Código de la partida</label>
-      <input type="text" id="join-code" class="code-input" maxlength="5" autocomplete="off" value="${esc(prefill)}" placeholder="ABCDE">
-      <label class="f">Tu nombre</label>
+    <form class="card join" data-form="join">
+      <h2>${ic('gamepad')} Unirse a una partida</h2>
+      <label class="f" for="join-code">Código de la partida</label>
+      <input type="text" id="join-code" class="code-input" maxlength="5" autocomplete="off" autocapitalize="characters" value="${esc(prefill)}" placeholder="ABCDE">
+      <label class="f" for="join-name">Tu nombre</label>
       <input type="text" id="join-name" maxlength="${MAX_NAME}" autocomplete="off" placeholder="Tu apodo">
-      <div class="err" id="join-err">${esc(ui.joinError)}</div>
-      <button class="btn big" type="submit" ${ui.joinBusy ? 'disabled' : ''}>${ui.joinBusy ? 'Conectando…' : 'Entrar'}</button>
+      <div class="err" id="join-err" role="alert">${esc(ui.joinError)}</div>
+      <button class="btn big" type="submit" ${ui.joinBusy ? 'disabled' : ''}>${ui.joinBusy ? 'Conectando…' : `Entrar ${ic('arrow', 'ic-arrow')}`}</button>
     </form>
+    <div class="card lift">
+      <h2>${ic('mic')} Crear y alojar partida</h2>
+      <p class="muted">Crea cuestionarios con imágenes, impórtalos o expórtalos en JSON y lanza una partida. Tú decides si también juegas.</p>
+      <button class="btn big" data-act="library">Mis cuestionarios ${ic('arrow', 'ic-arrow')}</button>
+    </div>
+  </div>
+  <div class="bento">
+    <div class="tile t1 reveal"><div class="badge">${ic('pencil')}</div><h3>Editor visual</h3><p>Preguntas de 2 a 4 opciones, tiempo y puntos configurables, y separadores de ronda.</p></div>
+    <div class="tile t2 reveal" style="transition-delay:.08s"><div class="badge">${ic('image')}</div><h3>Con imágenes</h3><p>Sube fotos o usa una URL. Se comprimen solas para que viajen rápido.</p></div>
+    <div class="tile t3 reveal" style="transition-delay:.16s"><div class="badge">${ic('file')}</div><h3>Importar y exportar</h3><p>Guarda tus cuestionarios en JSON y reimpórtalos cuando quieras.</p></div>
+    <div class="tile t4 reveal" style="transition-delay:.24s"><div class="badge">${ic('trophy')}</div><h3>Rachas y podio</h3><p>Puntos por rapidez, bonus de racha, premios y un podio final animado.</p></div>
   </div>`;
 };
 
 views.library = () => `
-  <div class="row between light" style="margin:10px 0 14px">
-    <h1 style="margin:0">Mis cuestionarios</h1>
+  <div class="page-head">
+    <h1>Mis cuestionarios</h1>
     <div class="row">
-      <button class="btn" data-act="new">＋ Nuevo</button>
-      <label class="btn sec">📥 Importar JSON<input type="file" id="import-file" accept=".json,application/json" multiple hidden></label>
-      <button class="btn sec" data-act="toggle-paste">Pegar JSON</button>
-      ${ui.quizzes.length ? '<button class="btn sec" data-act="export-all">📤 Exportar todos</button>' : ''}
+      <button class="btn" data-act="new">${ic('plus')} Nuevo</button>
+      <label class="btn sec" tabindex="0">${ic('download')} Importar JSON<input type="file" id="import-file" accept=".json,application/json" multiple hidden></label>
+      <button class="btn sec" data-act="toggle-paste">${ic('clipboard')} Pegar JSON</button>
+      ${ui.quizzes.length ? `<button class="btn sec" data-act="export-all">${ic('upload')} Exportar todos</button>` : ''}
     </div>
   </div>
-  ${ui.showPaste ? `<div class="card"><label class="f">Pega aquí el JSON del cuestionario</label>
+  ${ui.showPaste ? `<div class="card"><label class="f" for="paste-json">Pega aquí el JSON del cuestionario</label>
     <textarea id="paste-json" rows="6" placeholder='{"title": "...", "questions": [...]}'></textarea>
-    <div class="row" style="margin-top:8px"><button class="btn" data-act="import-paste">Importar</button><button class="btn ghost" data-act="toggle-paste">Cancelar</button></div></div>` : ''}
+    <div class="row" style="margin-top:12px"><button class="btn" data-act="import-paste">Importar</button><button class="btn ghost" data-act="toggle-paste">Cancelar</button></div></div>` : ''}
   <div class="card">
     ${ui.quizzes.length ? ui.quizzes.map(q => `
-      <div class="quiz-item">
+      <div class="quiz-item reveal">
         <div><h3>${esc(q.title || 'Sin título')}</h3>
-          <span class="muted">${realCount(q)} pregunta${realCount(q) === 1 ? '' : 's'}${q.questions.some(x => x.image) ? ' · 🖼️ con imágenes' : ''}${q.description ? ' · ' + esc(q.description) : ''}</span></div>
+          <span class="muted">${realCount(q)} pregunta${realCount(q) === 1 ? '' : 's'}${q.questions.some(x => x.image) ? ` · ${ic('image')} con imágenes` : ''}${q.description ? ' · ' + esc(q.description) : ''}</span></div>
         <div class="row">
-          <button class="btn ok" data-act="play" data-id="${q.id}">▶ Jugar</button>
-          <button class="btn sec" data-act="edit" data-id="${q.id}">✏️ Editar</button>
-          <button class="btn sec" data-act="export" data-id="${q.id}">📤 Exportar</button>
-          <button class="btn sec" data-act="dup" data-id="${q.id}">⧉</button>
-          <button class="btn danger" data-act="del" data-id="${q.id}">🗑</button>
+          <button class="btn ok" data-act="play" data-id="${q.id}">${ic('play')} Jugar</button>
+          <button class="btn sec" data-act="edit" data-id="${q.id}">${ic('pencil')} Editar</button>
+          <button class="btn sec" data-act="export" data-id="${q.id}">${ic('upload')} Exportar</button>
+          <button class="btn sec" data-act="dup" data-id="${q.id}" aria-label="Duplicar" title="Duplicar">${ic('copy')}</button>
+          <button class="btn danger" data-act="del" data-id="${q.id}" aria-label="Eliminar" title="Eliminar">${ic('trash')}</button>
         </div>
       </div>`).join('') : `
-      <p class="muted">Aún no tienes cuestionarios. Crea uno nuevo, importa un JSON o carga el de ejemplo.</p>
-      <button class="btn sec" data-act="sample">Cargar cuestionario de ejemplo</button>`}
+      <div class="empty">
+        <div class="badge">${ic('book')}</div>
+        <h3>Aún no tienes cuestionarios</h3>
+        <p class="muted">Crea uno nuevo, importa un JSON o carga el de ejemplo para probar.</p>
+        <button class="btn" data-act="sample">Cargar cuestionario de ejemplo</button>
+      </div>`}
   </div>
-  <button class="btn ghost light" data-act="home" style="color:#fff;border-color:rgba(255,255,255,.4)">← Volver</button>`;
+  <button class="btn ghost" data-act="home">${ic('back')} Volver</button>`;
 
 /* ───────────── vista: editor ───────────── */
 views.editor = () => {
   const z = ui.editing;
   return `
-  <div class="row between light" style="margin:10px 0 14px">
-    <h1 style="margin:0">${ui.quizzes.some(q => q.id === z.id) ? 'Editar' : 'Nuevo'} cuestionario</h1>
-    <div class="row"><button class="btn ok" data-act="save">💾 Guardar</button><button class="btn sec" data-act="library">Cancelar</button></div>
+  <div class="page-head">
+    <h1>${ui.quizzes.some(q => q.id === z.id) ? 'Editar' : 'Nuevo'} cuestionario</h1>
+    <div class="row"><button class="btn ok" data-act="save">${ic('save')} Guardar</button><button class="btn sec" data-act="library">Cancelar</button></div>
   </div>
   <div class="card">
-    <label class="f">Título</label><input type="text" data-bind="title" maxlength="120" value="${esc(z.title)}">
+    <label class="f" for="quiz-title">Título</label><input type="text" id="quiz-title" data-bind="title" maxlength="120" value="${esc(z.title)}">
     <label class="f">Descripción (opcional)</label><input type="text" data-bind="description" maxlength="500" value="${esc(z.description)}">
   </div>
   ${z.questions.map((q, i) => editorQuestion(q, i, z.questions.length, z)).join('')}
-  <div class="row"><button class="btn big" data-act="add-q">＋ Añadir pregunta</button><button class="btn big sec" data-act="add-sep">➖ Añadir separador</button><button class="btn big ok" data-act="save">💾 Guardar</button></div>`;
+  <div class="row"><button class="btn big" data-act="add-q">${ic('plus')} Añadir pregunta</button><button class="btn big sec" data-act="add-sep">${ic('heading')} Añadir separador</button><button class="btn big ok" data-act="save">${ic('save')} Guardar</button></div>`;
 };
 
 function editorQuestion(q, i, total, quiz) {
   const head = (label) => `<div class="q-head"><strong>${label}</strong>
       <div class="row">
-        <button class="btn sm sec" data-act="q-up" data-i="${i}" ${i === 0 ? 'disabled' : ''}>↑</button>
-        <button class="btn sm sec" data-act="q-down" data-i="${i}" ${i === total - 1 ? 'disabled' : ''}>↓</button>
-        <button class="btn sm sec" data-act="q-dup" data-i="${i}">⧉</button>
-        <button class="btn sm danger" data-act="q-del" data-i="${i}" ${total === 1 ? 'disabled' : ''}>🗑</button>
+        <button class="btn sm sec" data-act="q-up" data-i="${i}" ${i === 0 ? 'disabled' : ''} aria-label="Subir" title="Subir">${ic('up')}</button>
+        <button class="btn sm sec" data-act="q-down" data-i="${i}" ${i === total - 1 ? 'disabled' : ''} aria-label="Bajar" title="Bajar">${ic('down')}</button>
+        <button class="btn sm sec" data-act="q-dup" data-i="${i}" aria-label="Duplicar" title="Duplicar">${ic('copy')}</button>
+        <button class="btn sm danger" data-act="q-del" data-i="${i}" ${total === 1 ? 'disabled' : ''} aria-label="Eliminar" title="Eliminar">${ic('trash')}</button>
       </div></div>`;
   if (isTitle(q)) return `
   <div class="q-card sep-card" data-qi="${i}">
-    ${head('➖ Separador (pantalla de título, sin respuestas)')}
+    ${head(ic('heading') + ' Separador (pantalla de título, sin respuestas)')}
     <label class="f">Título</label><input type="text" data-bind="q.text" data-i="${i}" maxlength="120" value="${esc(q.text)}" placeholder="Ej.: Ronda 2 · Geografía">
     <label class="f">Subtítulo (opcional)</label><input type="text" data-bind="q.subtitle" data-i="${i}" maxlength="200" value="${esc(q.subtitle || '')}">
     <label class="f">Duración en pantalla</label><select data-bind="q.time" data-i="${i}">
@@ -221,13 +278,13 @@ function editorQuestion(q, i, total, quiz) {
   </div>`;
   return `
   <div class="q-card" data-qi="${i}">
-    ${head('Pregunta ' + qNumber(quiz, i))}
+    ${head(ic('help') + ' Pregunta ' + qNumber(quiz, i))}
     <textarea data-bind="q.text" data-i="${i}" placeholder="Escribe la pregunta…" maxlength="300">${esc(q.text)}</textarea>
     <label class="f">Imagen (opcional)</label>
     ${q.image ? `<img class="img-prev" src="${esc(q.image)}" alt="">
-      <button class="btn sm danger" data-act="img-del" data-i="${i}">Quitar imagen</button>` : `
+      <button class="btn sm danger" data-act="img-del" data-i="${i}">${ic('trash')} Quitar imagen</button>` : `
       <div class="row">
-        <label class="btn sm sec">🖼️ Subir imagen<input type="file" accept="image/*" data-imgfile="${i}" hidden></label>
+        <label class="btn sm sec">${ic('image')} Subir imagen<input type="file" accept="image/*" data-imgfile="${i}" hidden></label>
         <input type="text" data-imgurl="${i}" placeholder="…o pega una URL de imagen (https://…)" style="flex:1;min-width:200px">
         <button class="btn sm" data-act="img-url" data-i="${i}">Usar URL</button>
       </div>`}
@@ -237,9 +294,9 @@ function editorQuestion(q, i, total, quiz) {
         <span class="dot" style="background:var(--c${j})"></span>
         <input type="radio" name="correct-${i}" data-bind="q.correct" data-i="${i}" data-j="${j}" ${q.correct === j ? 'checked' : ''} title="Respuesta correcta">
         <input type="text" data-bind="q.opt" data-i="${i}" data-j="${j}" value="${esc(o)}" maxlength="120" placeholder="Opción ${j + 1}">
-        ${q.options.length > 2 ? `<button class="btn sm danger" data-act="opt-del" data-i="${i}" data-j="${j}">✕</button>` : ''}
+        ${q.options.length > 2 ? `<button class="btn sm danger" data-act="opt-del" data-i="${i}" data-j="${j}" aria-label="Quitar opción" title="Quitar opción">${ic('x')}</button>` : ''}
       </div>`).join('')}
-    ${q.options.length < 4 ? `<button class="btn sm sec" data-act="opt-add" data-i="${i}">＋ Añadir opción</button>` : ''}
+    ${q.options.length < 4 ? `<button class="btn sm sec" data-act="opt-add" data-i="${i}">${ic('plus')} Añadir opción</button>` : ''}
     <div class="opts-meta">
       <div><label class="f">Tiempo</label><select data-bind="q.time" data-i="${i}">
         ${[5, 10, 15, 20, 30, 45, 60, 90, 120].map(t => `<option value="${t}" ${q.time === t ? 'selected' : ''}>${t} s</option>`).join('')}</select></div>
@@ -296,7 +353,7 @@ views.hostSetup = () => {
   const quiz = ui.quizzes.find(q => q.id === ui.setupQuizId);
   return `
   <div class="card" style="max-width:560px;margin:20px auto">
-    <h2>▶ ${esc(quiz.title)}</h2>
+    <h2>${ic('play')} ${esc(quiz.title)}</h2>
     <p class="muted">${realCount(quiz)} preguntas</p>
     <label style="display:flex;gap:10px;align-items:center;font-weight:600;margin:12px 0">
       <input type="checkbox" id="host-plays" style="width:20px;height:20px" checked> Yo también quiero participar como jugador
@@ -304,7 +361,7 @@ views.hostSetup = () => {
     <div id="host-name-wrap"><label class="f">Tu nombre de jugador</label>
       <input type="text" id="host-name" maxlength="${MAX_NAME}" value="Host"></div>
     <div class="err" id="host-err"></div>
-    <div class="row"><button class="btn big ok" data-act="start-lobby" id="start-lobby">Crear sala</button><button class="btn ghost" data-act="library">Cancelar</button></div>
+    <div class="row"><button class="btn big ok" data-act="start-lobby" id="start-lobby">${ic('users')} Crear sala</button><button class="btn ghost" data-act="library">Cancelar</button></div>
   </div>`;
 };
 
@@ -510,6 +567,9 @@ function endQuestion() {
   });
   g.dist = dist;
   g.top = ranked().slice(0, 5).map(p => ({ name: p.name, score: p.score }));
+  g.revealDeadline = Date.now() + REVEAL_SECS * 1000;
+  clearTimeout(g.timer);
+  g.timer = setTimeout(() => { if (game === g && g.state === 'reveal') nextStep(); }, REVEAL_SECS * 1000);
   g.players.forEach(p => { if (p.conn) safeSend(p.conn, revealPayload(p)); });
   go('hostReveal');
 }
@@ -518,7 +578,7 @@ const noMoreQuestions = () => !game.quiz.questions.slice(game.qIndex + 1).some(q
 
 function revealPayload(p) {
   const g = game;
-  return { t: 'reveal', index: g.qIndex, correct: g.quiz.questions[g.qIndex].correct, ...p.last, score: p.score, streak: p.streak, rank: p.rank, prevRank: p.prevRank, players: g.players.size, top: g.top, dist: g.dist, last: noMoreQuestions() };
+  return { t: 'reveal', index: g.qIndex, correct: g.quiz.questions[g.qIndex].correct, ...p.last, score: p.score, streak: p.streak, rank: p.rank, prevRank: p.prevRank, players: g.players.size, top: g.top, dist: g.dist, last: noMoreQuestions(), wait: Math.max(0, (g.revealDeadline - Date.now()) / 1000) };
 }
 
 function computeAwards() {
@@ -526,11 +586,11 @@ function computeAwards() {
   const awards = [];
   const best = (arr, key, dir = -1) => arr.slice().sort((a, b) => dir * (key(a) - key(b)))[0];
   const streak = best(list, p => p.maxStreak);
-  if (streak && streak.maxStreak >= 2) awards.push({ icon: '🔥', title: 'Racha de fuego', name: streak.name, detail: `${streak.maxStreak} aciertos seguidos` });
+  if (streak && streak.maxStreak >= 2) awards.push({ icon: 'flame', title: 'Racha de fuego', name: streak.name, detail: `${streak.maxStreak} aciertos seguidos` });
   const fast = best(list.filter(p => p.correct > 0), p => p.timeSum / p.correct, 1);
-  if (fast) awards.push({ icon: '⚡', title: 'Rayo', name: fast.name, detail: `${(fast.timeSum / fast.correct / 1000).toFixed(1)} s de media` });
+  if (fast) awards.push({ icon: 'zap', title: 'Rayo', name: fast.name, detail: `${(fast.timeSum / fast.correct / 1000).toFixed(1)} s de media` });
   const acc = best(list, p => p.correct / p.answered + p.score / 1e9);
-  if (acc && acc.correct > 0) awards.push({ icon: '🎯', title: 'Francotirador', name: acc.name, detail: `${Math.round(acc.correct / acc.answered * 100)}% de acierto` });
+  if (acc && acc.correct > 0) awards.push({ icon: 'target', title: 'Francotirador', name: acc.name, detail: `${Math.round(acc.correct / acc.answered * 100)}% de acierto` });
   return awards;
 }
 
@@ -551,6 +611,7 @@ function finishGame() {
 
 function nextStep() {
   const g = game;
+  clearTimeout(g.timer);
   if (g.qIndex + 1 < g.quiz.questions.length) startQuestion(g.qIndex + 1); else finishGame();
 }
 
@@ -566,16 +627,16 @@ views.hostLobby = () => {
   const humans = g.players.size;
   return `
   <div class="stage">
-    <h2>Únete en esta misma web con el código</h2>
+    <h2>Únete en quiz.solde.cat con el código</h2>
     <div class="code-big">${g.code}</div>
     <div class="link">${esc(url)}</div>
-    <div class="row" style="justify-content:center;margin-top:8px"><button class="btn sm sec" data-act="copy-link">📋 Copiar enlace</button></div>
+    <div class="row center" style="margin-top:8px"><button class="btn sm sec" data-act="copy-link">${ic('link')} Copiar enlace</button></div>
     <h3 style="margin-top:20px">${g.quiz.title ? esc(g.quiz.title) : ''}</h3>
-    <div class="players">${humans ? [...g.players.values()].map(p => `<span class="chip">${esc(p.name)}${p.isHost ? ' 👑' : `<button data-act="kick" data-id="${esc(p.id)}" title="Expulsar">✕</button>`}</span>`).join('') : '<span class="spinner"></span>&nbsp; Esperando jugadores…'}</div>
+    <div class="players">${humans ? [...g.players.values()].map(p => `<span class="chip">${esc(p.name)}${p.isHost ? ic('crown') : `<button data-act="kick" data-id="${esc(p.id)}" title="Expulsar" aria-label="Expulsar a ${esc(p.name)}">${ic('x')}</button>`}</span>`).join('') : '<span class="spinner"></span>&nbsp; Esperando jugadores…'}</div>
     <p>${humans} jugador${humans === 1 ? '' : 'es'} · ${realCount(g.quiz)} preguntas${g.hostPlays ? '' : ' · el host no participa'}</p>
     <div class="row" style="justify-content:center">
-      <button class="btn big ok" data-act="start-game" ${humans ? '' : 'disabled'}>▶ Empezar</button>
-      <button class="btn big ghost" style="color:#fff;border-color:rgba(255,255,255,.4)" data-act="end-game">Cancelar</button>
+      <button class="btn big ok" data-act="start-game" ${humans ? '' : 'disabled'}>${ic('play')} Empezar</button>
+      <button class="btn big ghost" data-act="end-game">Cancelar</button>
     </div>
   </div>`;
 };
@@ -596,7 +657,7 @@ function titleHtml(q, skip) {
     <h1 class="title-big">${esc(q.text)}</h1>
     ${q.subtitle ? `<p class="title-sub">${esc(q.subtitle)}</p>` : ''}
     <div class="tbar" style="max-width:420px;margin:28px auto 0"><div class="title-fill" style="animation-duration:${Math.max(0.1, q.remaining ?? q.time)}s"></div></div>
-    ${skip ? '<div class="row" style="justify-content:center;margin-top:20px"><button class="btn sec" data-act="skip-title">Saltar ⏭</button></div>' : ''}
+    ${skip ? `<div class="row center" style="margin-top:24px"><button class="btn sec" data-act="skip-title">Saltar ${ic('skip')}</button></div>` : ''}
   </div>`;
 }
 views.hostTitle = () => titleHtml({ ...game.quiz.questions[game.qIndex], remaining: Math.max(0, (game.deadline - Date.now()) / 1000) }, true);
@@ -613,7 +674,7 @@ views.hostQuestion = () => {
   <div class="qtext">${esc(q.text)}</div>
   ${q.image ? `<img class="qimg" src="${esc(q.image)}" alt="">` : ''}
   ${answerButtons(q, { interactive: g.hostPlays, selected: mine ? mine.choice : undefined })}
-  <div class="row" style="justify-content:center;margin-top:16px"><button class="btn sec" data-act="skip">Terminar pregunta ⏭</button></div>`;
+  <div class="row" style="justify-content:center;margin-top:16px"><button class="btn sec" data-act="skip">Terminar pregunta ${ic('skip')}</button></div>`;
 };
 
 views.hostReveal = () => {
@@ -625,11 +686,13 @@ views.hostReveal = () => {
     <div class="qtext">${esc(q.text)}</div>
     <div class="dist">${g.dist.map((n, j) => `<div class="b"><span>${n}</span><i style="background:var(--c${j});height:${Math.round(n / max * 100)}%;opacity:${j === q.correct ? 1 : .45}"></i></div>`).join('')}</div>
     ${answerButtons(q, { interactive: false, correct: q.correct })}
-    ${me && me.last ? `<div class="big-result ${me.last.ok ? 'good' : 'bad'}" style="margin-top:14px"><h2>${me.last.ok ? '¡Correcto! +' + me.last.gained : me.last.answered ? 'Incorrecto' : 'Sin respuesta'}</h2>${me.streak >= 2 ? `<span class="pill">🔥 Racha ×${me.streak}</span>` : ''}</div>` : ''}
+    ${me && me.last ? `<div class="big-result ${me.last.ok ? 'good' : 'bad'}" style="margin-top:14px"><h2>${ic(me.last.ok ? 'check-circle' : 'x-circle')} ${me.last.ok ? '¡Correcto! +' + me.last.gained : me.last.answered ? 'Incorrecto' : 'Sin respuesta'}</h2>${me.streak >= 2 ? `<span class="pill">${ic('flame')} Racha ×${me.streak}</span>` : ''}</div>` : ''}
     <h3 style="margin-top:20px">Clasificación</h3>
     ${boardHtml(g.top, null)}
-    <div class="row" style="justify-content:center;margin-top:16px">
-      <button class="btn big ok" data-act="next">${isLast ? '🏆 Ver resultados finales' : 'Siguiente ➜'}</button>
+    <div class="tbar" style="max-width:420px;margin:20px auto 0" aria-hidden="true"><div class="title-fill" style="animation-duration:${Math.max(0.1, (g.revealDeadline - Date.now()) / 1000)}s"></div></div>
+    <p class="muted" style="margin:6px 0 0">${isLast ? 'Resultados finales' : 'Siguiente pregunta'} en unos segundos…</p>
+    <div class="row center" style="margin-top:12px">
+      <button class="btn big ok" data-act="next">${isLast ? `${ic('trophy')} Ver resultados finales` : `Siguiente ${ic('arrow', 'ic-arrow')}`}</button>
     </div>
   </div>`;
 };
@@ -639,26 +702,26 @@ function boardHtml(list, meName, limit = list.length) {
 }
 
 function podiumHtml(ranking) {
-  const slot = (i, cls) => ranking[i] ? `<div class="slot ${cls}">${i === 0 ? '<div class="crown">👑</div>' : ''}<div class="who">${esc(ranking[i].name)}</div><div class="pts">${ranking[i].score} pts</div><div class="blk">${i + 1}</div></div>` : `<div class="slot ${cls}"></div>`;
+  const slot = (i, cls) => ranking[i] ? `<div class="slot ${cls}">${i === 0 ? `<div class="crown">${ic('crown')}</div>` : ''}<div class="who">${esc(ranking[i].name)}</div><div class="pts">${ranking[i].score} pts</div><div class="blk">${i + 1}</div></div>` : `<div class="slot ${cls}"></div>`;
   return `<div class="podium">${slot(1, 'p2')}${slot(0, 'p1')}${slot(2, 'p3')}</div>`;
 }
 
 function awardsHtml(awards) {
-  return awards.length ? `<div class="awards">${awards.map(a => `<div class="award"><b>${a.icon} ${esc(a.title)}</b>${esc(a.name)}<br><small>${esc(a.detail)}</small></div>`).join('')}</div>` : '';
+  return awards.length ? `<div class="awards">${awards.map(a => `<div class="award"><span class="badge">${ic(a.icon)}</span><b>${esc(a.title)}</b><span>${esc(a.name)}</span><small>${esc(a.detail)}</small></div>`).join('')}</div>` : '';
 }
 
 views.hostFinal = () => {
   const g = game;
   return `
   <div class="stage">
-    <h1>🏆 ¡Fin de la partida!</h1>
+    <h1>¡Fin de la partida!</h1>
     ${podiumHtml(g.results)}
     ${awardsHtml(g.awards)}
     <h3>Resultados completos</h3>
-    <div class="board">${g.results.map((r, i) => `<div class="r"><span class="pos">${i + 1}</span><span class="nm">${esc(r.name)}</span><span class="muted">${r.correct}/${realCount(g.quiz)} ✔</span><span class="sc">${r.score} pts</span></div>`).join('')}</div>
-    <div class="row" style="justify-content:center;margin-top:18px">
-      <button class="btn sec" data-act="csv">📊 Descargar resultados (CSV)</button>
-      <button class="btn big" data-act="end-game">Volver al inicio</button>
+    <div class="board">${g.results.map((r, i) => `<div class="r"><span class="pos">${i + 1}</span><span class="nm">${esc(r.name)}</span><span class="muted">${r.correct}/${realCount(g.quiz)} ${ic('check')}</span><span class="sc">${r.score} pts</span></div>`).join('')}</div>
+    <div class="row center" style="margin-top:24px">
+      <button class="btn sec" data-act="csv">${ic('chart')} Descargar resultados (CSV)</button>
+      <button class="btn big" data-act="end-game">${ic('back')} Volver a mis cuestionarios</button>
     </div>
   </div>`;
 };
@@ -765,7 +828,7 @@ function clientTick() {
 }
 
 views.clientWait = () => `
-  <div class="wait"><h2>¡Estás dentro, ${esc(cli.name)}! 🎉</h2>
+  <div class="wait"><h2>${ic('check-circle')} ¡Estás dentro, ${esc(cli.name)}!</h2>
     <p>${cli.q ? 'Esperando…' : 'Esperando a que el host empiece la partida…'}</p>
     <div class="players">${cli.lobby.map(n => `<span class="chip">${esc(n)}</span>`).join('')}</div>
     <span class="spinner"></span></div>`;
@@ -779,7 +842,7 @@ views.clientQuestion = () => {
   <div class="qtext">${esc(q.text)}</div>
   ${q.image ? `<img class="qimg" src="${esc(q.image)}" alt="">` : ''}
   ${answerButtons(q, { interactive: true, selected: answered ? c.answered : undefined })}
-  ${answered ? '<p class="light" style="color:#fff;text-align:center;font-weight:700">Respuesta enviada ✔ Esperando al resto…</p>' : ''}`;
+  ${answered ? `<p class="center-note">${ic('check-circle')} Respuesta enviada. Esperando al resto…</p>` : ''}`;
 };
 
 function clientAnswer(choice) {
@@ -793,36 +856,37 @@ function clientAnswer(choice) {
 views.clientReveal = () => {
   const c = cli, r = c.reveal, q = c.q;
   const cls = r.ok ? 'good' : r.answered ? 'bad' : 'neutral';
-  const moved = r.prevRank && r.prevRank !== r.rank ? (r.rank < r.prevRank ? ` ▲${r.prevRank - r.rank}` : ` ▼${r.rank - r.prevRank}`) : '';
+  const moved = r.prevRank && r.prevRank !== r.rank ? (r.rank < r.prevRank ? ` <span class="rank-up">${ic('up')}${r.prevRank - r.rank}</span>` : ` <span class="rank-down">${ic('down')}${r.rank - r.prevRank}</span>`) : '';
   return `
   <div class="stage">
     <div class="big-result ${cls}">
-      <h2>${r.ok ? '¡Correcto! 🎉' : r.answered ? 'Incorrecto 😬' : '¡Tiempo agotado! ⏰'}</h2>
-      ${r.ok ? `<div style="font-size:1.6rem;font-weight:800;margin-top:6px">+${r.gained} puntos</div>` : ''}
+      <h2>${ic(r.ok ? 'check-circle' : r.answered ? 'x-circle' : 'clock')} ${r.ok ? '¡Correcto!' : r.answered ? 'Incorrecto' : '¡Tiempo agotado!'}</h2>
+      ${r.ok ? `<div class="pts-big" data-count="${r.gained}" data-prefix="+" data-suffix=" puntos">+${r.gained} puntos</div>` : ''}
       ${r.ok && r.bonus ? `<span class="pill">Bonus de racha +${r.bonus}</span>` : ''}
-      ${r.streak >= 2 ? `<span class="pill">🔥 Racha ×${r.streak}</span>` : ''}
+      ${r.streak >= 2 ? `<span class="pill">${ic('flame')} Racha ×${r.streak}</span>` : ''}
     </div>
-    <div class="qtext" style="font-size:1.1rem">Respuesta correcta: <span style="color:var(--c${r.correct})">${SHAPES[r.correct]} ${esc(q.options[r.correct])}</span></div>
-    <p style="font-size:1.4rem;font-weight:800">Puesto #${r.rank}${moved} de ${r.players} · ${r.score} pts</p>
+    <div class="qtext" style="font-size:1.1rem;border-top-color:var(--c${r.correct})">Respuesta correcta: <span style="color:var(--c${r.correct})">${SHAPES[r.correct]} ${esc(q.options[r.correct])}</span></div>
+    <p class="rankline">Puesto #${r.rank}${moved} de ${r.players} · <span data-count="${r.score}" data-suffix=" pts">${r.score} pts</span></p>
     ${boardHtml(r.top, c.name)}
-    <p style="margin-top:14px"><span class="spinner"></span> ${r.last ? 'Esperando los resultados finales…' : 'Esperando la siguiente pregunta…'}</p>
+    <div class="tbar" style="max-width:420px;margin:20px auto 8px" aria-hidden="true"><div class="title-fill" style="animation-duration:${Math.max(0.1, r.wait ?? 8)}s"></div></div>
+    <p class="muted">${r.last ? 'Resultados finales' : 'Siguiente pregunta'} en unos segundos…</p>
   </div>`;
 };
 
 views.clientFinal = () => {
   const f = cli.final, y = f.you;
   const mine = f.awards.filter(a => a.name === y.name);
-  const medal = y.rank === 1 ? '🥇' : y.rank === 2 ? '🥈' : y.rank === 3 ? '🥉' : '🎖️';
+  const medal = ic(y.rank <= 3 ? 'trophy' : 'award');
   return `
   <div class="stage">
-    <h1>${medal} Has quedado #${y.rank}</h1>
-    <p style="font-size:1.3rem;font-weight:700">${y.score} puntos · ${y.correct}/${y.total} aciertos · racha máx. ${y.maxStreak}</p>
-    ${mine.length ? `<p>${mine.map(a => `<span class="pill">${a.icon} ${esc(a.title)}</span>`).join('')}</p>` : ''}
+    <h1 class="grad-text">${medal} Has quedado #${y.rank}</h1>
+    <p class="rankline">${y.score} puntos · ${y.correct}/${y.total} aciertos · racha máx. ${y.maxStreak}</p>
+    ${mine.length ? `<p>${mine.map(a => `<span class="pill" style="background:var(--grad);color:#fff">${ic(a.icon)} ${esc(a.title)}</span>`).join('')}</p>` : ''}
     ${podiumHtml(f.ranking)}
     ${awardsHtml(f.awards)}
     <h3>Clasificación</h3>
     ${boardHtml(f.ranking, y.name, 10)}
-    <div class="row" style="justify-content:center;margin-top:18px"><button class="btn big" data-act="home">Salir</button></div>
+    <div class="row center" style="margin-top:24px"><button class="btn big" data-act="home">${ic('back')} Salir</button></div>
   </div>`;
 };
 
@@ -844,6 +908,12 @@ function launchConfetti() {
 
 /* ───────────── acciones (clics) ───────────── */
 const actions = {
+  theme() {
+    const next = effectiveTheme() === 'dark' ? 'light' : 'dark';
+    document.documentElement.dataset.theme = next;
+    try { localStorage.setItem('quizsolde.theme', next); } catch { }
+    syncThemeIcon();
+  },
   home() {
     if (inGame() && !(cli && cli.final) && ui.view !== 'hostFinal' && !confirm('¿Salir de la partida actual?')) return;
     leaveGame(); ui.joinError = ''; history.replaceState(null, '', location.pathname); go('home');
@@ -901,7 +971,7 @@ const actions = {
     const backup = ui.quizzes.slice();
     if (idx >= 0) ui.quizzes[idx] = clean; else ui.quizzes.push(clean);
     if (!store.save(ui.quizzes)) { ui.quizzes = backup; return; }
-    toast('Cuestionario guardado ✔'); ui.editing = null; go('library');
+    toast('Cuestionario guardado'); ui.editing = null; go('library');
   },
   /* partida: host */
   play(el) {
@@ -1010,4 +1080,5 @@ document.addEventListener('submit', async e => {
   }
 });
 
+syncThemeIcon();
 render();
