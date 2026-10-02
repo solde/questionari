@@ -16,6 +16,23 @@ Juego de preguntas tipo Kahoot que se ejecuta **solo con archivos estáticos** (
 - Gamificación: puntos por rapidez (500–1000), bonus por racha de aciertos, preguntas ×2, clasificación tras cada pregunta, podio animado, premios (🔥 Racha, ⚡ Rayo, 🎯 Francotirador) y CSV de resultados.
 - Reconexión automática de jugadores que pierdan la conexión.
 
+## Tipos de pregunta, comodines y avatares
+
+- **Tipos de pregunta**: respuesta múltiple, **ordenar** (se escriben los elementos en el orden correcto y se barajan al jugar; puntúa todo o nada) y **encuesta** (sin respuesta correcta, no puntúa; se muestran los votos).
+- **Comodines** (partida en directo): el host elige en el lobby cuáles se permiten — 50/50, puntos dobles, escudo de racha y saltar. Cada jugador puede usar cada uno una vez.
+- **Avatar**: al unirse, cada jugador elige un emoji o una letra (si no, se usa la inicial del nombre).
+- **Código QR** en el lobby, además del enlace para copiar (usa `qrcode-generator` desde unpkg).
+- **Examen**: cada alumno recibe las preguntas en orden aleatorio (dentro de cada bloque entre separadores); el informe CSV añade la columna «Núm. original».
+
+### Importar CSV
+
+Además de JSON se puede importar CSV (delimitador `,` `;` o tabulador, UTF-8). Descarga la plantilla desde la biblioteca. Columnas:
+`type,text,option1..option6,correct,time,points,image,explanation,subtitle`
+
+- `type`: vacío (respuesta múltiple), `order`, `poll` o `title` (separador).
+- `correct`: número (1 = primera opción) o letra A–F; no se usa en `order` ni `poll`.
+- En JSON, las preguntas de ordenar/encuesta llevan `"type": "order"` / `"type": "poll"`; en `order` las opciones van en el orden correcto.
+
 ## Modo examen
 Al crear la sala se elige **Partida en directo** o **Examen**.
 - Cada alumno avanza a su ritmo: puede volver atrás, saltar de pregunta con el navegador numerado y corregir hasta entregar.

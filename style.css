@@ -515,3 +515,32 @@ input[type=checkbox] { accent-color: var(--brand); }
 
 .opt-row .dot.num { display: grid; place-items: center; background: var(--grad); color: var(--on-brand); font: 700 .8rem var(--font-ui); }
 .hint { margin: 0 0 var(--s2); }
+
+/* ── avatares, ordenar, comodines, QR ── */
+.av { display: inline-grid; place-items: center; min-width: 1.6em; height: 1.6em; padding: 0 .15em; margin-inline-end: .4em; border-radius: 50%; background: color-mix(in srgb, var(--on-chip, var(--text)) 18%, transparent); font-size: 1em; line-height: 1; vertical-align: middle; }
+.board .r .nm { display: flex; align-items: center; }
+.podium .who { display: flex; align-items: center; justify-content: center; gap: 2px; flex-wrap: wrap; }
+.av-pick { display: grid; gap: var(--s2); }
+.av-input { max-width: 9em; text-align: center; font-size: 1.3rem; }
+.av-grid { display: flex; flex-wrap: wrap; gap: 6px; }
+.av-opt { width: 40px; height: 40px; border-radius: var(--radius-md, 12px); border: 1px solid var(--line); background: var(--surface); font-size: 1.3rem; cursor: pointer; padding: 0; line-height: 1; }
+.av-opt:hover, .av-opt:focus-visible { border-color: var(--brand); transform: translateY(-2px); }
+
+.ord { list-style: none; margin: var(--s3) 0; padding: 0; display: grid; gap: var(--s2); }
+.ord-item { display: flex; align-items: center; gap: var(--s3); padding: var(--s3) var(--s4); background: var(--surface); border: 2px solid var(--line); border-radius: var(--radius-lg); font-weight: 700; text-align: start; }
+.ord-item .ord-t { flex: 1; overflow-wrap: anywhere; }
+.ord-btns { display: inline-flex; gap: 6px; flex: none; }
+.ord.solved .ord-item { border-color: var(--ok, #16a34a); }
+.ans.gone { opacity: .12; box-shadow: none; }
+
+.pu-bar { display: flex; flex-wrap: wrap; gap: var(--s2); justify-content: center; margin-top: var(--s4); }
+.pu { display: inline-flex; align-items: center; gap: 8px; min-height: 44px; padding: 8px 16px; border-radius: var(--radius-full); border: 2px solid var(--brand); background: var(--surface); color: var(--text); font: 700 var(--text-sm, .9rem) var(--font-ui); cursor: pointer; }
+.pu:hover:not(:disabled) { background: var(--brand); color: var(--on-brand); }
+.pu:disabled { opacity: .45; cursor: default; }
+.pu.on { background: var(--brand); color: var(--on-brand); opacity: 1; }
+.pu-pick { border: 0; padding: 0; margin: var(--s5) auto 0; max-width: 640px; }
+.pu-list { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: var(--s2); text-align: start; }
+
+.qr-card { display: inline-flex; flex-direction: column; align-items: center; gap: 6px; margin: var(--s4) 0 0; padding: 12px; background: #fff; color: #111; border-radius: var(--radius-lg); box-shadow: var(--shadow-md); }
+.qr-card .qr { width: min(60vw, 220px); height: auto; display: block; }
+.qr-card small { font-weight: 600; max-width: 220px; }

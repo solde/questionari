@@ -51,6 +51,35 @@ const blankSeparator = () => ({ id: uid(), type: 'title', text: '', subtitle: ''
 const isTitle = q => q.type === 'title';
 const isOrder = q => q.type === 'order';
 const isPoll = q => q.type === 'poll';
+const shuffleArr = arr => { const r = arr.slice(); for (let i = r.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [r[i], r[j]] = [r[j], r[i]]; } return r; };
+/** Permutación aleatoria de 0..n-1 que no sea la identidad (para que la lista a ordenar nunca salga ya resuelta). */
+const shuffledPerm = n => { const id = Array.from({ length: n }, (_, i) => i); let p = shuffleArr(id); for (let k = 0; k < 8 && n > 1 && p.every((v, i) => v === i); k++) p = shuffleArr(id); return p; };
+const isPerm = (arr, n) => Array.isArray(arr) && arr.length === n && new Set(arr).size === n && arr.every(v => Number.isInteger(v) && v >= 0 && v < n);
+const hasAns = v => Number.isInteger(v) || Array.isArray(v);
+const PU_KINDS = ['fifty', 'double', 'shield', 'skip'], PU_ICON = { fifty: 'target', double: 'zap', shield: 'shield', skip: 'skip' };
+const AVATARS = ['😀', '😎', '🤓', '🦊', '🐱', '🐶', '🐼', '🦄', '🐸', '🐙', '🚀', '⚽', '🎸', '🍕', '🌈', '⭐'];
+const firstGrapheme = s => { try { const it = new Intl.Segmenter(undefined, { granularity: 'grapheme' }).segment(s)[Symbol.iterator]().next(); return it.done ? '' : it.value.segment; } catch { return Array.from(s)[0] || ''; } };
+/** Avatar = un emoji o una letra (primer grafema). Sin avatar válido se usa la inicial del nombre. */
+function cleanAvatar(s, name) {
+  let g = firstGrapheme(String(s ?? '').replace(/[\u0000-\u001f\u007f<>&"'`]/g, '').trim());
+  if (g.length > 16) g = '';
+  return g || firstGrapheme(String(name || '?').trim()).toUpperCase() || '?';
+}
+const av = x => x ? `<span class="av" aria-hidden="true">${esc(x)}</span>` : '';
+const savedAvatar = () => { try { return localStorage.getItem('quizsolde.avatar') || ''; } catch { return ''; } };
+const saveAvatar = v => { try { localStorage.setItem('quizsolde.avatar', v); } catch { } };
+const avatarPicker = (id, val) => `<label class="f" for="${id}">${t('avatar.label')}</label>
+  <div class="av-pick"><input type="text" id="${id}" class="av-input" maxlength="12" autocomplete="off" value="${esc(val)}" placeholder="${esc(t('avatar.ph'))}">
+  <div class="av-grid">${AVATARS.map(x => `<button type="button" class="av-opt" data-act="av-pick" data-v="${x}" data-for="${id}" aria-label="${x}">${x}</button>`).join('')}</div></div>`;
+function qrSvg(text) {
+  if (typeof qrcode !== 'function') return '';
+  try {
+    const q = qrcode(0, 'M'); q.addData(text); q.make();
+    const n = q.getModuleCount(), m = 2; let d = '';
+    for (let r = 0; r < n; r++) for (let c = 0; c < n; c++) if (q.isDark(r, c)) d += `M${c + m} ${r + m}h1v1h-1z`;
+    return `<svg class="qr" viewBox="0 0 ${n + 2 * m} ${n + 2 * m}" shape-rendering="crispEdges" role="img" aria-label="QR"><rect width="100%" height="100%" fill="#fff"/><path d="${d}" fill="#000"/></svg>`;
+  } catch { return ''; }
+}
 const gradable = q => !isTitle(q) && !isPoll(q);            // las encuestas y los separadores no puntúan
 const maxOpts = q => isOrder(q) ? 6 : 4;
 const realCount = quiz => quiz.questions.filter(q => !isTitle(q)).length;
@@ -403,6 +432,7 @@ views.home = () => {
       <input type="text" id="join-code" class="code-input" maxlength="5" autocomplete="off" autocapitalize="characters" value="${esc(prefill)}" placeholder="ABCDE">
       <label class="f" for="join-name">${t('join.name')}</label>
       <input type="text" id="join-name" maxlength="${MAX_NAME}" autocomplete="off" placeholder="${esc(t('join.name.ph'))}">
+      ${avatarPicker('join-avatar', savedAvatar())}
       <div class="err" id="join-err" role="alert">${esc(ui.joinError)}</div>
       <button class="btn big" type="submit" ${ui.joinBusy ? 'disabled' : ''}>${ui.joinBusy ? t('join.busy') : `${t('join.btn')} ${ic('arrow', 'ic-arrow')}`}</button>
     </form>
@@ -595,13 +625,13 @@ views.hostSetup = () => {
       <input type="checkbox" id="host-plays" style="width:20px;height:20px" checked> ${t('setup.plays')}
     </label>
     <div id="host-name-wrap"><label class="f" for="host-name">${t('setup.name')}</label>
-      <input type="text" id="host-name" maxlength="${MAX_NAME}" value="Host"></div>
+      <input type="text" id="host-name" maxlength="${MAX_NAME}" value="Host">${avatarPicker('host-avatar', savedAvatar())}</div>
     <div class="err" id="host-err" role="alert"></div>
     <div class="row"><button class="btn big ok" data-act="start-lobby" id="start-lobby">${ic('users')} ${t('setup.create')}</button><button class="btn ghost" data-act="library">${t('common.cancel')}</button></div>
   </div>`;
 };
 
-async function createLobby(quiz, hostPlays, hostName, mode = 'live') {
+async function createLobby(quiz, hostPlays, hostName, mode = 'live', hostAvatar = '') {
   let peer = null, code = null;
   for (let attempt = 0; attempt < 6; attempt++) {
     code = genCode();
@@ -620,10 +650,10 @@ async function createLobby(quiz, hostPlays, hostName, mode = 'live') {
   if (!peer) throw new Error(t('err.lobby'));
 
   game = {
-    peer, code, quiz, hostPlays, hostName: hostName || 'Host', mode, solo: null, state: 'lobby', qIndex: -1, qStart: 0, deadline: 0, timer: null,
+    peer, code, quiz, hostPlays, hostName: hostName || 'Host', hostAvatar: cleanAvatar(hostAvatar, hostName || 'Host'), puOn: new Set(PU_KINDS), act: new Map(), hostQs: null, perm: null, shuf: null, mode, solo: null, state: 'lobby', qIndex: -1, qStart: 0, deadline: 0, timer: null,
     answers: new Map(), players: new Map(), results: null,
   };
-  if (hostPlays && mode === 'live') game.players.set('host', newPlayer('host', hostName || 'Host', null, true));
+  if (hostPlays && mode === 'live') game.players.set('host', newPlayer('host', hostName || 'Host', null, true, game.hostAvatar));
 
   peer.on('connection', conn => {
     conn.on('data', msg => onClientMessage(conn, msg));
@@ -635,21 +665,22 @@ async function createLobby(quiz, hostPlays, hostName, mode = 'live') {
   $('#conn-badge').textContent = t('badge.room', { code });
 }
 
-const newPlayer = (id, name, conn, isHost = false) => ({
-  id, name, conn, isHost, connected: true, score: 0, streak: 0, maxStreak: 0, correct: 0, answered: 0, timeSum: 0, rank: 0, prevRank: 0, last: null,
+const newPlayer = (id, name, conn, isHost = false, avatar = '') => ({
+  id, name, avatar, conn, pu: {}, isHost, connected: true, score: 0, streak: 0, maxStreak: 0, correct: 0, answered: 0, timeSum: 0, rank: 0, prevRank: 0, last: null,
 });
 
 function connectedHumans() { return [...game.players.values()].filter(p => p.isHost || p.connected); }
 function broadcast(msg) { if (!game) return; game.players.forEach(p => { if (p.conn) safeSend(p.conn, msg); }); }
 
-function lobbyNames() { return [...game.players.values()].map(p => p.name); }
+function lobbyList() { return [...game.players.values()].map(p => ({ name: p.name, avatar: p.avatar })); }
 
 function onClientMessage(conn, msg) {
   if (!game || !msg || typeof msg !== 'object') return;
   if (msg.t === 'join') return handleJoin(conn, msg);
   const p = [...game.players.values()].find(x => x.conn === conn);
   if (!p) return;
-  if (msg.t === 'answer') registerAnswer(p, msg.q, msg.choice);
+  if (msg.t === 'answer') registerAnswer(p, msg.q, msg.choice, msg.order);
+  else if (msg.t === 'powerup') usePowerup(p, msg.q, msg.kind);
   else if (typeof msg.t === 'string' && msg.t.startsWith('exam_')) examMsg(p, msg);
 }
 
@@ -668,9 +699,9 @@ function handleJoin(conn, msg) {
   if (game.state !== 'lobby') return safeSend(conn, { t: 'error', code: 'started' });
   if ([...game.players.values()].some(p => p.name.toLowerCase() === name.toLowerCase())) return safeSend(conn, { t: 'error', code: 'name_taken' });
   if (game.players.size >= 100) return safeSend(conn, { t: 'error', code: 'full' });
-  game.players.set(id, newPlayer(id, name, conn));
+  game.players.set(id, newPlayer(id, name, conn, false, cleanAvatar(msg.avatar, name)));
   safeSend(conn, { t: 'joined', name, mode: game.mode });
-  broadcast({ t: 'lobby', names: lobbyNames() });
+  broadcast({ t: 'lobby', list: lobbyList() });
   refreshHostLive();
 }
 
@@ -679,25 +710,27 @@ function onClientClose(conn) {
   const p = [...game.players.values()].find(x => x.conn === conn);
   if (!p) return;
   p.connected = false; p.conn = null;
-  if (game.state === 'lobby') { game.players.delete(p.id); broadcast({ t: 'lobby', names: lobbyNames() }); }
+  if (game.state === 'lobby') { game.players.delete(p.id); broadcast({ t: 'lobby', list: lobbyList() }); }
   refreshHostLive();
   if (game.state === 'question') maybeCloseQuestion();
 }
 
 function resendState(p) {
   const g = game;
-  if (g.state === 'lobby') safeSend(p.conn, { t: 'lobby', names: lobbyNames() });
+  if (g.state === 'lobby') safeSend(p.conn, { t: 'lobby', list: lobbyList() });
   else if (g.state === 'title') safeSend(p.conn, titlePayload(g.qIndex, Math.max(0, (g.deadline - Date.now()) / 1000)));
   else if (g.state === 'question') {
-    safeSend(p.conn, { ...questionPayload(g.qIndex), time: Math.max(0, (g.deadline - Date.now()) / 1000), answered: g.answers.has(p.id), choice: g.answers.get(p.id)?.choice });
+    safeSend(p.conn, { ...questionPayload(g.qIndex, p), time: Math.max(0, (g.deadline - Date.now()) / 1000), answered: g.answers.has(p.id), choice: g.answers.get(p.id)?.choice, skipped: !!g.answers.get(p.id)?.skip });
   } else if (g.state === 'reveal' && p.last) safeSend(p.conn, revealPayload(p));
   else if (g.state === 'final') safeSend(p.conn, finalPayload(p));
   else if (g.state === 'exam' && p.ex) { if (p.ex.done) toPlayer(p, { t: 'exam_report', report: p.ex.report }); else examSendBegin(p); }
 }
 
-function questionPayload(i) {
-  const q = game.quiz.questions[i];
-  return { t: 'question', index: i, num: qNumber(game.quiz, i), total: realCount(game.quiz), text: q.text, image: q.image, options: q.options, time: q.time, points: q.points };
+function questionPayload(i, p) {
+  const g = game, q = g.quiz.questions[i];
+  const o = { t: 'question', index: i, num: qNumber(g.quiz, i), total: realCount(g.quiz), type: qType(q), text: q.text, image: q.image, options: isOrder(q) ? g.shuf : q.options, time: q.time, points: q.points };
+  if (p) { o.pu = p.pu || {}; const ac = g.act.get(p.id); if (ac) { o.act = ac.kinds; o.hide = ac.hide; } }
+  return o;
 }
 
 function startQuestion(i) {
@@ -705,8 +738,9 @@ function startQuestion(i) {
   if (isTitle(q)) return startTitle(i);
   g.qIndex = i; g.state = 'question'; g.answers = new Map();
   g.qStart = Date.now(); g.deadline = g.qStart + q.time * 1000;
-  g.players.forEach(p => { p.prevRank = p.rank; p.last = null; });
-  broadcast(questionPayload(i));
+  g.act = new Map(); g.hostQs = { ord: null, act: [], hide: [] };
+  if (isOrder(q)) { g.perm = shuffledPerm(q.options.length); g.shuf = g.perm.map(k => q.options[k]); g.hostQs.ord = g.shuf.map((_, k) => k); }
+  g.players.forEach(p => { p.prevRank = p.rank; p.last = null; if (p.conn) safeSend(p.conn, questionPayload(i, p)); });
   go('hostQuestion');
   clearInterval(g.timer);
   g.timer = setInterval(hostTick, 200);
@@ -736,16 +770,46 @@ function hostTick() {
   if (Date.now() > g.deadline + 700) endQuestion();   // 700 ms de cortesía por latencia
 }
 
-function registerAnswer(p, qIndex, choice) {
+function registerAnswer(p, qIndex, choice, order, skip) {
   const g = game;
   if (!g || g.state !== 'question' || qIndex !== g.qIndex || g.answers.has(p.id)) return;
   const q = g.quiz.questions[g.qIndex];
-  if (!Number.isInteger(choice) || choice < 0 || choice >= q.options.length) return;
   const now = Date.now();
   if (now > g.deadline + 700) return;
-  g.answers.set(p.id, { choice, ms: clamp(now - g.qStart, 0, q.time * 1000) });
+  const ms = clamp(now - g.qStart, 0, q.time * 1000);
+  let a;
+  if (skip) a = { skip: true, ms };
+  else if (isOrder(q)) { if (!isPerm(order, q.options.length)) return; a = { order: order.slice(), ms }; }
+  else {
+    if (!Number.isInteger(choice) || choice < 0 || choice >= q.options.length) return;
+    const ac = g.act.get(p.id);
+    if (ac && ac.hide.includes(choice)) return;       // opción eliminada por el 50/50
+    a = { choice, ms };
+  }
+  g.answers.set(p.id, a);
   refreshHostLive();
   maybeCloseQuestion();
+}
+
+/** Comodines (solo partida en directo): cada jugador tiene uno de cada tipo habilitado por el host. */
+function usePowerup(p, qIndex, kind) {
+  const g = game;
+  if (!g || g.state !== 'question' || qIndex !== g.qIndex || g.answers.has(p.id)) return null;
+  if (!g.puOn.has(kind) || !(p.pu && p.pu[kind] > 0)) return null;
+  const q = g.quiz.questions[g.qIndex];
+  if (isPoll(q)) return null;
+  const ac = g.act.get(p.id) || { kinds: [], hide: [] };
+  if (ac.kinds.includes(kind)) return null;
+  if (kind === 'fifty') {
+    if (isOrder(q) || q.options.length < 3) return null;
+    const wrong = q.options.map((_, j) => j).filter(j => j !== q.correct);
+    ac.hide = shuffleArr(wrong).slice(0, Math.min(2, wrong.length - 1));
+  }
+  p.pu[kind]--; ac.kinds.push(kind); g.act.set(p.id, ac);
+  const res = { t: 'pu_ok', q: qIndex, kind, hide: ac.hide, act: ac.kinds, pu: p.pu };
+  if (p.conn) safeSend(p.conn, res);
+  if (kind === 'skip') registerAnswer(p, qIndex, null, null, true);
+  return res;
 }
 
 function maybeCloseQuestion() {
@@ -784,28 +848,34 @@ function endQuestion() {
   if (!g || g.state !== 'question') return;
   clearInterval(g.timer);
   g.state = 'reveal';
-  const q = g.quiz.questions[g.qIndex];
+  const q = g.quiz.questions[g.qIndex], type = qType(q);
   const dist = q.options.map(() => 0);
+  let okCount = 0, voted = 0;
   g.players.forEach(p => {
-    const a = g.answers.get(p.id);
-    const res = { answered: !!a, choice: a ? a.choice : null, ok: false, gained: 0, bonus: 0 };
-    p.answered++;
-    if (a) {
-      dist[a.choice]++;
-      res.ok = a.choice === q.correct;
+    const a = g.answers.get(p.id), kinds = (g.act.get(p.id) || { kinds: [] }).kinds;
+    const res = { answered: !!a && !a.skip, skipped: !!(a && a.skip), choice: a && a.choice !== undefined ? a.choice : null, ok: false, gained: 0, bonus: 0, used: kinds, saved: false, poll: type === 'poll' };
+    const miss = () => { if (q.points === 'none') return; if (kinds.includes('shield')) res.saved = true; else p.streak = 0; };
+    if (type === 'poll') { if (res.answered) { dist[a.choice]++; voted++; } }
+    else if (!res.skipped) {
+      p.answered++;
+      if (res.answered) {
+        if (type === 'order') res.ok = a.order.every((s, k) => g.perm[s] === k);
+        else { dist[a.choice]++; res.ok = a.choice === q.correct; }
+      }
       if (res.ok) {
+        okCount++;
         p.correct++; p.timeSum += a.ms;
         if (q.points !== 'none') p.streak++;
         p.maxStreak = Math.max(p.maxStreak, p.streak);
-        const s = scoreFor(a.ms, q, p.streak);
-        res.gained = s.base + s.bonus; res.bonus = s.bonus;
+        const s = scoreFor(a.ms, q, p.streak), mul = kinds.includes('double') ? 2 : 1;
+        res.gained = (s.base + s.bonus) * mul; res.bonus = s.bonus * mul;
         p.score += res.gained;
-      } else if (q.points !== 'none') p.streak = 0;
-    } else if (q.points !== 'none') p.streak = 0;
+      } else miss();
+    }
     p.last = res;
   });
-  g.dist = dist;
-  g.top = ranked().slice(0, 5).map(p => ({ name: p.name, score: p.score }));
+  g.dist = dist; g.okCount = okCount; g.voted = voted;
+  g.top = ranked().slice(0, 5).map(p => ({ name: p.name, score: p.score, avatar: p.avatar }));
   const rs = revealSecs(q);
   g.revealDeadline = Date.now() + rs * 1000;
   clearTimeout(g.timer);
@@ -818,7 +888,8 @@ const noMoreQuestions = () => !game.quiz.questions.slice(game.qIndex + 1).some(q
 
 function revealPayload(p) {
   const g = game;
-  return { t: 'reveal', index: g.qIndex, correct: g.quiz.questions[g.qIndex].correct, ...p.last, score: p.score, streak: p.streak, rank: p.rank, prevRank: p.prevRank, players: g.players.size, top: g.top, dist: g.dist, last: noMoreQuestions(), explanation: g.quiz.questions[g.qIndex].explanation || '', wait: Math.max(0, (g.revealDeadline - Date.now()) / 1000) };
+  const q = g.quiz.questions[g.qIndex];
+  return { t: 'reveal', index: g.qIndex, type: qType(q), correct: qType(q) === 'choice' ? q.correct : null, correctOrder: isOrder(q) ? q.options : null, okCount: g.okCount, voted: g.voted, ...p.last, score: p.score, streak: p.streak, rank: p.rank, prevRank: p.prevRank, players: g.players.size, top: g.top, dist: g.dist, last: noMoreQuestions(), explanation: q.explanation || '', wait: Math.max(0, (g.revealDeadline - Date.now()) / 1000) };
 }
 
 function computeAwards() {
@@ -836,7 +907,7 @@ function computeAwards() {
 
 function finalPayload(p) {
   const g = game;
-  return { t: 'final', ranking: g.results.map(r => ({ name: r.name, score: r.score, correct: r.correct })), awards: g.awards, you: { name: p.name, rank: p.rank, score: p.score, correct: p.correct, total: realCount(g.quiz), maxStreak: p.maxStreak }, total: realCount(g.quiz) };
+  return { t: 'final', ranking: g.results.map(r => ({ name: r.name, avatar: r.avatar, score: r.score, correct: r.correct })), awards: g.awards, you: { name: p.name, rank: p.rank, score: p.score, correct: p.correct, total: g.quiz.questions.filter(gradable).length, maxStreak: p.maxStreak }, total: g.quiz.questions.filter(gradable).length };
 }
 
 function finishGame() {
@@ -857,8 +928,46 @@ function nextStep() {
 
 function hostAnswer(choice) {
   const p = game.players.get('host');
-  document.querySelectorAll('.ans').forEach((b, j) => { b.classList.toggle('sel', j === choice); b.classList.toggle('dim', j !== choice); if (b.tagName === 'BUTTON') b.disabled = true; });
   if (p) registerAnswer(p, game.qIndex, choice);
+  if (game.state === 'question') render();
+}
+function hostPu(kind) {
+  const p = game.players.get('host'), res = p && usePowerup(p, game.qIndex, kind);
+  if (res) { game.hostQs.act = res.act; game.hostQs.hide = res.hide; if (game.state === 'question') render(); }
+}
+function hostOrderSubmit() {
+  const p = game.players.get('host');
+  if (p) registerAnswer(p, game.qIndex, null, game.hostQs.ord);
+  if (game.state === 'question') render();
+}
+const moveItem = (arr, k, d) => { const j = k + d; if (j >= 0 && j < arr.length) [arr[k], arr[j]] = [arr[j], arr[k]]; };
+
+/** Lista de elementos a ordenar (con flechas) o ya resuelta (solo lectura). */
+function orderHtml(texts, arr, { prefix, locked }) {
+  return `<ol class="ord">${arr.map((s, k) => `<li class="ord-item"><span class="dot num">${k + 1}</span><span class="ord-t">${esc(texts[s])}</span>${locked ? '' : `<span class="ord-btns">
+    <button type="button" class="btn sm sec" data-act="${prefix}-up" data-k="${k}" ${k === 0 ? 'disabled' : ''} aria-label="${esc(t('ed.up'))}">${ic('up')}</button>
+    <button type="button" class="btn sm sec" data-act="${prefix}-down" data-k="${k}" ${k === arr.length - 1 ? 'disabled' : ''} aria-label="${esc(t('ed.down'))}">${ic('down')}</button></span>`}</li>`).join('')}</ol>`;
+}
+const solvedHtml = texts => `<ol class="ord solved">${texts.map((x, k) => `<li class="ord-item"><span class="dot num">${k + 1}</span><span class="ord-t">${esc(x)}</span></li>`).join('')}</ol>`;
+
+/** Botones de comodines para el jugador (o el host que juega). */
+function puBar(q, pu, act, locked) {
+  const kinds = PU_KINDS.filter(k => pu && k in pu && !isPoll(q) && !(k === 'fifty' && (isOrder(q) || q.options.length < 3)));
+  if (!kinds.length) return '';
+  return `<div class="pu-bar" role="group" aria-label="${esc(t('pu.title'))}">${kinds.map(k => {
+    const on = act.includes(k);
+    return `<button type="button" class="pu ${on ? 'on' : ''}" data-act="pu" data-k="${k}" ${locked || on || !(pu[k] > 0) ? 'disabled' : ''} title="${esc(t('pu.' + k + '.d'))}">${ic(PU_ICON[k])} ${t(on && (k === 'double' || k === 'shield') ? 'pu.' + k + '.on' : 'pu.' + k)}</button>`;
+  }).join('')}</div>`;
+}
+
+/** Zona de respuesta en directo (cliente y host que juega). `qv` trae las opciones tal como se muestran. */
+function liveAnswers(qv, qs, { answered, interactive, selected, pu }) {
+  if (isOrder(qv)) {
+    return `<p class="muted center-note">${t('order.hint')}</p>${orderHtml(qv.options, qs.ord, { prefix: 'ord', locked: answered || !interactive })}
+    ${interactive && !answered ? `<div class="row center"><button class="btn big ok" data-act="ord-submit">${ic('check-circle')} ${t('order.confirm')}</button></div>` : ''}
+    ${interactive ? puBar(qv, pu, qs.act, answered) : ''}`;
+  }
+  return `${answerButtons(qv, { interactive, selected: answered ? selected : undefined, hide: qs.hide })}${interactive ? puBar(qv, pu, qs.act, answered) : ''}`;
 }
 
 /* ── vistas del host ── */
@@ -871,9 +980,11 @@ views.hostLobby = () => {
     <div class="code-big">${g.code}</div>
     <div class="link">${esc(url)}</div>
     <div class="row center" style="margin-top:8px"><button class="btn sm sec" data-act="copy-link">${ic('link')} ${t('lobby.copy')}</button></div>
-    ${g.mode === 'exam' ? `<p style="margin-top:12px"><span class="pill-exam">${ic('clipboard')} ${t('lobby.exam')} · ${t('exam.duration', { time: fmtClock(examTotalSecs(g.quiz)) })}</span></p>` : ''}
+    ${(g.qr = g.qr ?? qrSvg(url)) ? `<div class="qr-card">${g.qr}<small>${t('lobby.qr')}</small></div>` : ''}
+    ${g.mode === 'exam' ? `<p style="margin-top:12px"><span class="pill-exam">${ic('clipboard')} ${t('lobby.exam')} · ${t('exam.duration', { time: fmtClock(examTotalSecs(g.quiz)) })}</span></p><p class="muted">${t('exam.random')}</p>` : `<fieldset class="pu-pick"><legend class="f">${t('pu.title')}</legend><p class="muted">${t('pu.hint')}</p>
+      <div class="pu-list">${PU_KINDS.map(k => `<label class="mode-card"><input type="checkbox" data-pu="${k}" ${g.puOn.has(k) ? 'checked' : ''}><span><b>${ic(PU_ICON[k])} ${t('pu.' + k)}</b><small>${t('pu.' + k + '.d')}</small></span></label>`).join('')}</div></fieldset>`}
     <h3 style="margin-top:20px">${g.quiz.title ? esc(g.quiz.title) : ''}</h3>
-    <div class="players">${humans ? [...g.players.values()].map(p => `<span class="chip">${esc(p.name)}${p.isHost ? ic('crown') : `<button data-act="kick" data-id="${esc(p.id)}" title="${esc(t('lobby.kick'))}" aria-label="${esc(t('lobby.kick.aria', { name: p.name }))}">${ic('x')}</button>`}</span>`).join('') : `<span class="spinner"></span>&nbsp; ${t('lobby.waiting')}`}</div>
+    <div class="players">${humans ? [...g.players.values()].map(p => `<span class="chip">${av(p.avatar)}${esc(p.name)}${p.isHost ? ic('crown') : `<button data-act="kick" data-id="${esc(p.id)}" title="${esc(t('lobby.kick'))}" aria-label="${esc(t('lobby.kick.aria', { name: p.name }))}">${ic('x')}</button>`}</span>`).join('') : `<span class="spinner"></span>&nbsp; ${t('lobby.waiting')}`}</div>
     <p>${tn('lobby.players', humans)} · ${tn('lib.count', realCount(g.quiz))}${g.hostPlays || g.mode === 'exam' ? '' : ' · ' + t('lobby.nohost')}</p>
     ${g.mode === 'exam' && !humans ? `<p class="muted" style="max-width:520px;margin:0 auto 12px">${t('lobby.solo.hint')}</p>` : ''}
     <div class="row" style="justify-content:center">
@@ -885,9 +996,10 @@ views.hostLobby = () => {
   </div>`;
 };
 
-function answerButtons(q, { interactive, selected, correct }) {
+function answerButtons(q, { interactive, selected, correct, hide = [] }) {
   return `<div class="answers">${q.options.map((o, j) => {
     const cls = ['ans', 'c' + j];
+    if (hide.includes(j)) return `<div class="ans c${j} dim gone" aria-hidden="true"><span class="shape">${SHAPES[j]}</span>—</div>`;
     if (correct !== undefined) cls.push(j === correct ? 'right' : 'dim');
     else if (selected !== undefined && selected !== null) cls.push(j === selected ? 'sel' : 'dim');
     return interactive && correct === undefined && (selected === undefined || selected === null)
@@ -909,7 +1021,8 @@ views.clientTitle = () => titleHtml(cli.title, false);
 
 views.hostQuestion = () => {
   const g = game, q = g.quiz.questions[g.qIndex];
-  const mine = g.answers.get('host');
+  const mine = g.answers.get('host'), me = g.players.get('host');
+  const qv = { ...q, options: isOrder(q) ? g.shuf : q.options };
   return `
   <div class="qbar"><span>${t('qbar.q', { n: qNumber(g.quiz, g.qIndex), total: realCount(g.quiz) })}${q.points === 'double' ? ' · ' + t('qbar.x2') : q.points === 'none' ? ' · ' + t('qbar.none') : ''}</span>
     <span id="acount">${t('qbar.answers', { n: g.answers.size, total: connectedHumans().length })}</span>
@@ -917,21 +1030,36 @@ views.hostQuestion = () => {
   <div class="tbar"><div id="tfill"></div></div>
   <div class="qtext">${esc(q.text)}</div>
   ${q.image ? `<img class="qimg" src="${esc(q.image)}" alt="">` : ''}
-  ${answerButtons(q, { interactive: g.hostPlays, selected: mine ? mine.choice : undefined })}
+  ${liveAnswers(qv, g.hostQs, { answered: !!mine, interactive: g.hostPlays, selected: mine ? mine.choice : undefined, pu: me ? me.pu : null })}
+  ${mine && mine.skip ? `<p class="center-note">${ic('skip')} ${t('pu.skipped')}</p>` : ''}
   <div class="row" style="justify-content:center;margin-top:16px"><button class="btn sec" data-act="skip">${t('q.end')} ${ic('skip')}</button></div>`;
 };
 
+const resHead = r => r.poll ? { cls: 'neutral', icon: r.answered ? 'check-circle' : 'clock', text: r.answered ? t('poll.thanks') : t('reveal.timeout') }
+  : r.skipped ? { cls: 'neutral', icon: 'skip', text: t('pu.skipped') }
+  : r.ok ? { cls: 'good', icon: 'check-circle', text: t('reveal.correct') }
+  : r.answered ? { cls: 'bad', icon: 'x-circle', text: t('reveal.wrong') } : { cls: 'neutral', icon: 'clock', text: t('reveal.timeout') };
+/** Distribución de votos / aciertos de una pregunta, según su tipo. */
+function revealBody(qv, r, dist, correct) {
+  if (qv.type === 'order' || isOrder(qv)) return `<p class="muted center-note">${t('order.correct')}</p>${solvedHtml(r.correctOrder)}<p class="center-note">${ic('check')} ${r.okCount} / ${r.players}</p>`;
+  const max = Math.max(1, ...dist);
+  const poll = isPoll(qv);
+  return `<div class="dist">${dist.map((n, j) => `<div class="b"><span>${n}</span><i style="background:var(--c${j});height:${Math.round(n / max * 100)}%;opacity:${poll || j === correct ? 1 : .45}"></i></div>`).join('')}</div>
+    ${answerButtons(qv, { interactive: false, correct: poll ? undefined : correct })}`;
+}
+
 views.hostReveal = () => {
   const g = game, q = g.quiz.questions[g.qIndex], me = g.players.get('host');
-  const max = Math.max(1, ...g.dist);
   const isLast = noMoreQuestions();
+  const rv = { ...revealPayload(me || { last: {}, score: 0, streak: 0, rank: 0, prevRank: 0 }), players: g.players.size };
+  const h = me && me.last ? resHead(me.last) : null;
   return `
   <div class="stage">
     <div class="qtext">${esc(q.text)}</div>
-    <div class="dist">${g.dist.map((n, j) => `<div class="b"><span>${n}</span><i style="background:var(--c${j});height:${Math.round(n / max * 100)}%;opacity:${j === q.correct ? 1 : .45}"></i></div>`).join('')}</div>
-    ${answerButtons(q, { interactive: false, correct: q.correct })}
+    ${isPoll(q) ? `<h3>${t('poll.results')}</h3>` : ''}
+    ${revealBody(q, rv, g.dist, q.correct)}
     ${q.explanation ? `<div class="explain">${ic('lightbulb')}<div><b>${t('reveal.why')}</b><p>${esc(q.explanation)}</p></div></div>` : ''}
-    ${me && me.last ? `<div class="big-result ${me.last.ok ? 'good' : 'bad'}" style="margin-top:14px"><h2>${ic(me.last.ok ? 'check-circle' : 'x-circle')} ${me.last.ok ? t('reveal.correct') + ' +' + me.last.gained : me.last.answered ? t('reveal.wrong') : t('reveal.noanswer')}</h2>${me.streak >= 2 ? `<span class="pill">${ic('flame')} ${t('reveal.streak', { n: me.streak })}</span>` : ''}</div>` : ''}
+    ${h ? `<div class="big-result ${h.cls}" style="margin-top:14px"><h2>${ic(h.icon)} ${h.text}${me.last.ok ? ' +' + me.last.gained : ''}</h2>${me.streak >= 2 ? `<span class="pill">${ic('flame')} ${t('reveal.streak', { n: me.streak })}</span>` : ''}${me.last.saved ? `<span class="pill">${ic('shield')} ${t('pu.saved')}</span>` : ''}</div>` : ''}
     <h3 style="margin-top:20px">${t('reveal.board')}</h3>
     ${boardHtml(g.top, null)}
     <div class="tbar" style="max-width:420px;margin:20px auto 0" aria-hidden="true"><div class="title-fill" style="animation-duration:${Math.max(0.1, (g.revealDeadline - Date.now()) / 1000)}s"></div></div>
@@ -943,11 +1071,11 @@ views.hostReveal = () => {
 };
 
 function boardHtml(list, meName, limit = list.length) {
-  return `<div class="board">${list.slice(0, limit).map((r, i) => `<div class="r ${r.name === meName ? 'me' : ''}"><span class="pos">${i + 1}</span><span class="nm">${esc(r.name)}</span><span class="sc">${r.score} ${t('pts.short')}</span></div>`).join('')}</div>`;
+  return `<div class="board">${list.slice(0, limit).map((r, i) => `<div class="r ${r.name === meName ? 'me' : ''}"><span class="pos">${i + 1}</span><span class="nm">${av(r.avatar)}${esc(r.name)}</span><span class="sc">${r.score} ${t('pts.short')}</span></div>`).join('')}</div>`;
 }
 
 function podiumHtml(ranking) {
-  const slot = (i, cls) => ranking[i] ? `<div class="slot ${cls}">${i === 0 ? `<div class="crown">${ic('crown')}</div>` : ''}<div class="who">${esc(ranking[i].name)}</div><div class="pts">${ranking[i].score} ${t('pts.short')}</div><div class="blk">${i + 1}</div></div>` : `<div class="slot ${cls}"></div>`;
+  const slot = (i, cls) => ranking[i] ? `<div class="slot ${cls}">${i === 0 ? `<div class="crown">${ic('crown')}</div>` : ''}<div class="who">${av(ranking[i].avatar)}${esc(ranking[i].name)}</div><div class="pts">${ranking[i].score} ${t('pts.short')}</div><div class="blk">${i + 1}</div></div>` : `<div class="slot ${cls}"></div>`;
   return `<div class="podium">${slot(1, 'p2')}${slot(0, 'p1')}${slot(2, 'p3')}</div>`;
 }
 
@@ -963,7 +1091,7 @@ views.hostFinal = () => {
     ${podiumHtml(g.results)}
     ${awardsHtml(g.awards)}
     <h3>${t('final.all')}</h3>
-    <div class="board">${g.results.map((r, i) => `<div class="r"><span class="pos">${i + 1}</span><span class="nm">${esc(r.name)}</span><span class="muted">${r.correct}/${realCount(g.quiz)} ${ic('check')}</span><span class="sc">${r.score} ${t('pts.short')}</span></div>`).join('')}</div>
+    <div class="board">${g.results.map((r, i) => `<div class="r"><span class="pos">${i + 1}</span><span class="nm">${av(r.avatar)}${esc(r.name)}</span><span class="muted">${r.correct}/${g.quiz.questions.filter(gradable).length} ${ic('check')}</span><span class="sc">${r.score} ${t('pts.short')}</span></div>`).join('')}</div>
     <div class="row center" style="margin-top:24px">
       <button class="btn sec" data-act="csv">${ic('chart')} ${t('final.csv')}</button>
       <button class="btn big" data-act="end-game">${ic('back')} ${t('final.back')}</button>
@@ -984,24 +1112,36 @@ function resultsCsv() {
 /** Duración del examen = suma de la duración de todas sus preguntas (en segundos). */
 const examTotalSecs = quiz => quiz.questions.reduce((s, q) => s + (isTitle(q) ? 0 : q.time), 0);
 const fmtClock = sec => { sec = Math.max(0, Math.ceil(sec)); const h = Math.floor(sec / 3600), m = Math.floor(sec % 3600 / 60), s = sec % 60; return (h ? h + ':' + String(m).padStart(2, '0') : m) + ':' + String(s).padStart(2, '0'); };
-const examKinds = () => game.quiz.questions.map(q => isTitle(q) ? 't' : 'q');
-const newExam = () => ({ idx: 0, answers: [], times: [], enteredAt: 0, done: false, report: null, startedAt: Date.now(), finishedAt: 0 });
+/** Orden aleatorio por alumno: las preguntas se barajan dentro de cada bloque entre separadores; los separadores se quedan en su sitio. */
+function examSeq(quiz) {
+  const out = []; let block = [];
+  const flush = () => { out.push(...shuffleArr(block)); block = []; };
+  quiz.questions.forEach((q, i) => { if (isTitle(q)) { flush(); out.push(i); } else block.push(i); });
+  flush();
+  return out;
+}
+const examKinds = e => e.seq.map(oi => isTitle(game.quiz.questions[oi]) ? 't' : 'q');
+const examIsOk = (e, oi, q) => { const v = e.answers[oi]; return isOrder(q) ? Array.isArray(v) && v.every((s, k) => e.perm[oi][s] === k) : gradable(q) && v === q.correct; };
+const newExam = quiz => ({ seq: examSeq(quiz), perm: {}, idx: 0, answers: [], times: [], enteredAt: 0, done: false, report: null, startedAt: Date.now(), finishedAt: 0 });
 const examAllDone = () => !!game && game.mode === 'exam' && game.state === 'exam' && [...game.players.values()].every(p => p.ex && p.ex.done);
 
 /** Entrega un mensaje a un jugador; el host en solitario lo recibe en local. */
 function toPlayer(p, msg) { if (p.isHost) examReceive(game.solo, msg); else safeSend(p.conn, msg); }
 
-function examItemPayload(i) {
-  const q = game.quiz.questions[i];
-  return isTitle(q)
-    ? { t: 'exam_item', i, kind: 't', text: q.text, subtitle: q.subtitle || '' }
-    : { t: 'exam_item', i, kind: 'q', n: qNumber(game.quiz, i), total: realCount(game.quiz), text: q.text, image: q.image, options: q.options };
+/** Elemento en la posición `i` de la secuencia propia del alumno. */
+function examItemPayload(p, i) {
+  const e = p.ex, oi = e.seq[i], q = game.quiz.questions[oi];
+  if (isTitle(q)) return { t: 'exam_item', i, kind: 't', text: q.text, subtitle: q.subtitle || '' };
+  let options = q.options;
+  if (isOrder(q)) { e.perm[oi] = e.perm[oi] || shuffledPerm(q.options.length); options = e.perm[oi].map(k => q.options[k]); }
+  const n = e.seq.slice(0, i + 1).filter(k => !isTitle(game.quiz.questions[k])).length;
+  return { t: 'exam_item', i, kind: 'q', type: qType(q), n, total: realCount(game.quiz), text: q.text, image: q.image, options };
 }
 function examSendBegin(p) {
-  const e = p.ex, len = game.quiz.questions.length;
+  const e = p.ex;
   e.enteredAt = Date.now();
-  toPlayer(p, { t: 'exam_begin', total: examTotalSecs(game.quiz), remaining: Math.max(0, (game.examDeadline - Date.now()) / 1000), kinds: examKinds(), answers: Array.from({ length: len }, (_, i) => Number.isInteger(e.answers[i]) ? e.answers[i] : null), idx: e.idx, nq: realCount(game.quiz) });
-  toPlayer(p, examItemPayload(e.idx));
+  toPlayer(p, { t: 'exam_begin', total: examTotalSecs(game.quiz), remaining: Math.max(0, (game.examDeadline - Date.now()) / 1000), kinds: examKinds(e), answers: e.seq.map(oi => hasAns(e.answers[oi]) ? e.answers[oi] : null), idx: e.idx, nq: realCount(game.quiz) });
+  toPlayer(p, examItemPayload(p, e.idx));
 }
 function startExam() {
   const g = game;
@@ -1010,7 +1150,7 @@ function startExam() {
   g.examDeadline = Date.now() + secs * 1000;
   clearTimeout(g.examTimer);
   g.examTimer = setTimeout(() => { if (game === g && g.state === 'exam') g.players.forEach(p => finishExamFor(p, 'time')); }, secs * 1000);
-  g.players.forEach(p => { p.ex = newExam(); if (p.isHost || p.conn) examSendBegin(p); });
+  g.players.forEach(p => { p.ex = newExam(g.quiz); if (p.isHost || p.conn) examSendBegin(p); });
   if (!g.solo) go('hostExam');
 }
 /** El host, solo en la sala, hace el examen con la vista de un alumno. */
@@ -1018,12 +1158,12 @@ function examSolo() {
   const g = game;
   if (g.players.size) return;
   g.hostPlays = true;
-  g.players.set('host', newPlayer('host', g.hostName, null, true));
+  g.players.set('host', newPlayer('host', g.hostName, null, true, g.hostAvatar));
   g.solo = { kinds: [], answers: [], items: {}, idx: 0, nq: 0, report: null };
   startExam();
 }
 function examLeaveItem(e) {
-  if (e.enteredAt) { e.times[e.idx] = (e.times[e.idx] || 0) + Date.now() - e.enteredAt; e.enteredAt = 0; }
+  if (e.enteredAt) { const oi = e.seq[e.idx]; e.times[oi] = (e.times[oi] || 0) + Date.now() - e.enteredAt; e.enteredAt = 0; }
 }
 /** Mensajes de un alumno (por red) o del host en solitario (en local). */
 function examMsg(p, msg) {
@@ -1031,14 +1171,15 @@ function examMsg(p, msg) {
   if (!g || g.state !== 'exam' || !e || e.done) return;
   const items = g.quiz.questions;
   if (msg.t === 'exam_answer') {
-    const q = items[msg.i];
+    const oi = e.seq[msg.i], q = items[oi];
     if (!q || isTitle(q)) return;
-    if (msg.choice === null || (Number.isInteger(msg.choice) && msg.choice >= 0 && msg.choice < q.options.length)) e.answers[msg.i] = msg.choice;
+    if (isOrder(q)) { if (isPerm(msg.order, q.options.length)) e.answers[oi] = msg.order.slice(); }
+    else if (msg.choice === null || (Number.isInteger(msg.choice) && msg.choice >= 0 && msg.choice < q.options.length)) e.answers[oi] = msg.choice;
     refreshHostLive();
   } else if (msg.t === 'exam_goto') {
-    if (!Number.isInteger(msg.i) || msg.i < 0 || msg.i >= items.length) return;
+    if (!Number.isInteger(msg.i) || msg.i < 0 || msg.i >= e.seq.length) return;
     examLeaveItem(e); e.idx = msg.i; e.enteredAt = Date.now();
-    if (msg.need) toPlayer(p, examItemPayload(msg.i));
+    if (msg.need) toPlayer(p, examItemPayload(p, msg.i));
     refreshHostLive();
   } else if (msg.t === 'exam_submit') {
     finishExamFor(p);
@@ -1046,16 +1187,26 @@ function examMsg(p, msg) {
 }
 function buildReport(p) {
   const g = game, e = p.ex, rows = [];
-  let correct = 0, wrong = 0, blank = 0, totalMs = 0;
-  g.quiz.questions.forEach((q, i) => {
+  let correct = 0, wrong = 0, blank = 0, totalMs = 0, pos = 0;
+  e.seq.forEach(oi => {
+    const q = g.quiz.questions[oi];
     if (isTitle(q)) return;
-    const ch = e.answers[i], has = Number.isInteger(ch), ok = has && ch === q.correct, ms = e.times[i] || 0;
+    pos++;
+    const v = e.answers[oi], has = hasAns(v), ms = e.times[oi] || 0;
     totalMs += ms;
-    if (!has) blank++; else if (ok) correct++; else wrong++;
-    rows.push({ n: qNumber(g.quiz, i), text: q.text, yours: has ? q.options[ch] : '', right: q.options[q.correct], status: !has ? 'blank' : ok ? 'ok' : 'bad', explanation: q.explanation || '', ms });
+    let yours = '', right = '', status;
+    if (isOrder(q)) {
+      right = q.options.join(' > ');
+      if (has) yours = v.map(s => q.options[e.perm[oi][s]]).join(' > ');
+    } else if (isPoll(q)) { if (has) yours = q.options[v]; }
+    else { if (has) yours = q.options[v]; right = q.options[q.correct]; }
+    if (isPoll(q)) status = 'poll';
+    else if (!has) { blank++; status = 'blank'; }
+    else if (examIsOk(e, oi, q)) { correct++; status = 'ok'; } else { wrong++; status = 'bad'; }
+    rows.push({ n: pos, orig: qNumber(g.quiz, oi), text: q.text, yours, right, status, explanation: q.explanation || '', ms });
   });
-  const total = rows.length;
-  return { name: p.name, total, correct, wrong, blank, pct: Math.round(correct / total * 100), grade: +(correct / total * 10).toFixed(1), totalMs, avgMs: Math.round(totalMs / total), rows };
+  const total = correct + wrong + blank;
+  return { name: p.name, total, correct, wrong, blank, pct: total ? Math.round(correct / total * 100) : 0, grade: total ? +(correct / total * 10).toFixed(1) : 0, totalMs, avgMs: Math.round(totalMs / (rows.length || 1)), rows };
 }
 function finishExamFor(p, reason) {
   const e = p.ex;
@@ -1081,6 +1232,19 @@ function examPick(j) {
   exSend({ t: 'exam_answer', i, choice: st.answers[i] });
   render();
 }
+const examOrd = (st, it) => Array.isArray(st.answers[st.idx]) ? st.answers[st.idx] : it.options.map((_, k) => k);
+function examMove(k, d) {
+  const st = exState(), it = st.items[st.idx];
+  if (!st || st.report || !it) return;
+  const arr = examOrd(st, it).slice(); moveItem(arr, k, d);
+  st.answers[st.idx] = arr; exSend({ t: 'exam_answer', i: st.idx, order: arr }); render();
+}
+function examOrderOk() {
+  const st = exState(), it = st.items[st.idx];
+  if (!st || st.report || !it) return;
+  const arr = examOrd(st, it).slice();
+  st.answers[st.idx] = arr; exSend({ t: 'exam_answer', i: st.idx, order: arr }); render();
+}
 function examNavigate(i) {
   const st = exState();
   if (!st || st.report || !Number.isInteger(i) || i < 0 || i >= st.kinds.length) return;
@@ -1088,7 +1252,7 @@ function examNavigate(i) {
   exSend({ t: 'exam_goto', i, need: !cached });
   if (cached) { st.idx = i; go('clientExam'); }
 }
-const examBlanks = st => st.kinds.reduce((n, k, i) => n + (k === 'q' && !Number.isInteger(st.answers[i]) ? 1 : 0), 0);
+const examBlanks = st => st.kinds.reduce((n, k, i) => n + (k === 'q' && !hasAns(st.answers[i]) ? 1 : 0), 0);
 function examSubmit() {
   const st = exState(), blanks = examBlanks(st);
   if (blanks && !confirm(t('exam.submit.confirm', { n: blanks }))) return;
@@ -1109,7 +1273,7 @@ function examClock() {
 setInterval(examClock, 500);
 
 function examTop(st) {
-  const answered = st.kinds.reduce((n, k, i) => n + (k === 'q' && Number.isInteger(st.answers[i]) ? 1 : 0), 0);
+  const answered = st.kinds.reduce((n, k, i) => n + (k === 'q' && hasAns(st.answers[i]) ? 1 : 0), 0);
   const left = st.deadline ? (st.deadline - performance.now()) / 1000 : 0;
   return `<div class="exam-top"><span class="chip-info">${t('exam.answered', { n: answered, total: st.nq })}</span>
     <span class="chip-info xtimer ${left <= 60 ? 'urgent' : ''}" id="xt" title="${esc(t('exam.left'))}">${ic('clock')}<span>${fmtClock(left)}</span></span></div>`;
@@ -1118,7 +1282,7 @@ function examTop(st) {
 function examNav(st) {
   const last = st.kinds.length - 1;
   let qn = 0;
-  const chips = st.kinds.map((k, i) => k === 'q' ? (qn++, `<button class="qchip ${Number.isInteger(st.answers[i]) ? 'done' : ''} ${i === st.idx ? 'cur' : ''}" data-act="exam-go" data-i="${i}" aria-label="${esc(t('exam.jump', { n: qn }))}" ${i === st.idx ? 'aria-current="true"' : ''}>${qn}</button>`) : '').join('');
+  const chips = st.kinds.map((k, i) => k === 'q' ? (qn++, `<button class="qchip ${hasAns(st.answers[i]) ? 'done' : ''} ${i === st.idx ? 'cur' : ''}" data-act="exam-go" data-i="${i}" aria-label="${esc(t('exam.jump', { n: qn }))}" ${i === st.idx ? 'aria-current="true"' : ''}>${qn}</button>`) : '').join('');
   return `
   <div class="exam-nav">
     <div class="qchips">${chips}</div>
@@ -1135,19 +1299,20 @@ views.clientExam = () => {
   if (!it) return `<div class="wait"><span class="spinner"></span></div>`;
   if (it.kind === 't') return `${examTop(st)}<div class="stage title-screen" style="padding-block:clamp(24px,8vh,80px)"><h1 class="title-big">${esc(it.text)}</h1>${it.subtitle ? `<p class="title-sub">${esc(it.subtitle)}</p>` : ''}</div>${examNav(st)}`;
   const sel = st.answers[st.idx];
+  const order = it.type === 'order', arr = order ? examOrd(st, it) : null;
   return `
   ${examTop(st)}
-  <div class="qbar"><span>${t('qbar.q', { n: it.n, total: it.total })}</span></div>
+  <div class="qbar"><span>${t('qbar.q', { n: it.n, total: it.total })}${it.type === 'poll' ? ' · ' + t('type.poll') : ''}</span></div>
   <div class="qtext">${esc(it.text)}</div>
   ${it.image ? `<img class="qimg" src="${esc(it.image)}" alt="">` : ''}
-  <div class="answers">${it.options.map((o, j) => `<button class="ans c${j} ${sel === j ? 'sel' : ''}" data-act="exam-pick" data-j="${j}" aria-pressed="${sel === j}"><span class="shape">${SHAPES[j]}</span>${esc(o)}</button>`).join('')}</div>
+  ${order ? `<p class="muted center-note">${t('order.hint')}</p>${orderHtml(it.options, arr, { prefix: 'xord', locked: false })}<div class="row center"><button class="btn ${Array.isArray(sel) ? 'sec' : 'ok'}" data-act="xord-ok">${ic('check-circle')} ${t('order.confirm')}</button></div>` : `<div class="answers">${it.options.map((o, j) => `<button class="ans c${j} ${sel === j ? 'sel' : ''}" data-act="exam-pick" data-j="${j}" aria-pressed="${sel === j}"><span class="shape">${SHAPES[j]}</span>${esc(o)}</button>`).join('')}</div>`}
   ${examNav(st)}`;
 };
 
 const fmtMs = ms => { const s = Math.round(ms / 1000); return s < 60 ? `${s} ${t('unit.s')}` : `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`; };
 views.clientReport = () => {
   const r = exState().report;
-  const icon = { ok: 'check-circle', bad: 'x-circle', blank: 'help' };
+  const icon = { ok: 'check-circle', bad: 'x-circle', blank: 'help', poll: 'chart' };
   const stat = (label, val, cls = '') => `<div class="stat ${cls}"><b>${val}</b><span>${label}</span></div>`;
   return `
   <div class="stage">
@@ -1171,7 +1336,7 @@ views.clientReport = () => {
     <div class="review">${r.rows.map(x => `
       <details class="rev ${x.status}"><summary>${ic(icon[x.status])}<span class="rn">${x.n}.</span><span class="rt">${esc(x.text)}</span></summary>
         <dl><dt>${t('rep.yours')}</dt><dd>${x.yours ? esc(x.yours) : '—'}</dd>
-        <dt>${t('rep.right')}</dt><dd>${esc(x.right)}</dd>
+        <dt>${t('rep.right')}</dt><dd>${x.right ? esc(x.right) : '—'}</dd>
         ${x.explanation ? `<dt>${t('reveal.why')}</dt><dd>${esc(x.explanation)}</dd>` : ''}</dl></details>`).join('')}</div>
   </div>`;
 };
@@ -1184,10 +1349,10 @@ function csvCell(v) {
 }
 function downloadReportCsv(reports, withStudent) {
   if (!reports.length) return;
-  const statusText = { ok: t('rep.res.ok'), bad: t('rep.res.bad'), blank: t('rep.res.blank') };
-  const head = [...(withStudent ? ['csv.student'] : []), 'csv.qn', 'csv.question', 'csv.yours', 'csv.right', 'csv.result', 'csv.expl', 'csv.secs'].map(k => csvCell(t(k)));
+  const statusText = { ok: t('rep.res.ok'), bad: t('rep.res.bad'), blank: t('rep.res.blank'), poll: t('rep.res.poll') };
+  const head = [...(withStudent ? ['csv.student'] : []), 'csv.qn', 'csv.orig', 'csv.question', 'csv.yours', 'csv.right', 'csv.result', 'csv.expl', 'csv.secs'].map(k => csvCell(t(k)));
   const lines = [head.join(',')];
-  reports.forEach(r => r.rows.forEach(x => lines.push([...(withStudent ? [r.name] : []), x.n, x.text, x.yours, x.right, statusText[x.status], x.explanation, (x.ms / 1000).toFixed(1)].map(csvCell).join(','))));
+  reports.forEach(r => r.rows.forEach(x => lines.push([...(withStudent ? [r.name] : []), x.n, x.orig, x.text, x.yours, x.right, statusText[x.status], x.explanation, (x.ms / 1000).toFixed(1)].map(csvCell).join(','))));
   const name = withStudent ? `exam-${game ? game.code : 'all'}-all.csv` : `exam-${slug(reports[0].name)}.csv`;
   download(name, '﻿' + lines.join('\r\n'), 'text/csv;charset=utf-8');
 }
@@ -1199,10 +1364,10 @@ views.hostExam = () => {
   const done = studs.filter(p => p.ex.done), all = examAllDone();
   const avg = done.length ? (done.reduce((s, p) => s + p.ex.report.grade, 0) / done.length).toFixed(1) : '—';
   const rows = studs.map(p => {
-    const e = p.ex, ans = g.quiz.questions.reduce((n, q, i) => n + (!isTitle(q) && Number.isInteger(e.answers[i]) ? 1 : 0), 0);
-    const ok = g.quiz.questions.reduce((n, q, i) => n + (!isTitle(q) && e.answers[i] === q.correct ? 1 : 0), 0);
+    const e = p.ex, ans = g.quiz.questions.reduce((n, q, i) => n + (!isTitle(q) && hasAns(e.answers[i]) ? 1 : 0), 0);
+    const ok = g.quiz.questions.reduce((n, q, i) => n + (!isTitle(q) && examIsOk(e, i, q) ? 1 : 0), 0);
     const st = e.done ? 'done' : p.connected ? 'going' : 'off';
-    return `<div class="erow"><span class="en">${esc(p.name)}</span>
+    return `<div class="erow"><span class="en">${av(p.avatar)}${esc(p.name)}</span>
       <span class="ep"><span class="prog"><i style="width:${Math.round(ans / nq * 100)}%"></i></span><small>${ans} / ${nq}</small></span>
       <span class="es">${e.done ? `<b>${e.report.grade}</b> <small>/ 10</small>` : `${ok}`}</span>
       <span class="est st-${st}">${t('exam.st.' + st)}</span>
@@ -1236,9 +1401,9 @@ function getPlayerId(code) {
   try { let v = sessionStorage.getItem(key); if (!v) { v = uid() + uid(); sessionStorage.setItem(key, v); } return v; } catch { return uid() + uid(); }
 }
 
-async function joinGame(code, name) {
+async function joinGame(code, name, avatar = '') {
   const id = getPlayerId(code);
-  cli = { code, name, id, peer: null, conn: null, q: null, answered: null, ended: false, closing: false, timer: null, t0: 0, lobby: [], reveal: null, final: null, retries: 0 };
+  cli = { code, name, avatar, id, qs: null, pu: {}, peer: null, conn: null, q: null, answered: null, ended: false, closing: false, timer: null, t0: 0, lobby: [], reveal: null, final: null, retries: 0 };
   const peer = await new Promise((resolve, reject) => {
     const p = new Peer(undefined, peerOptions());
     const to = setTimeout(() => { p.destroy(); reject(new Error(t('err.server'))); }, 12000);
@@ -1261,7 +1426,7 @@ function connectToHost() {
     const done = (fn, v) => { if (!settled) { settled = true; clearTimeout(timeout); c.pending = null; fn(v); } };
     const timeout = setTimeout(() => { try { conn.close(); } catch { } done(reject, new Error(t('err.nogame2'))); }, 12000);
     c.pending = e => done(reject, e.message === 'no-game' ? new Error(t('err.nogame')) : e);
-    conn.on('open', () => safeSend(conn, { t: 'join', id: c.id, name: c.name }));
+    conn.on('open', () => safeSend(conn, { t: 'join', id: c.id, name: c.name, avatar: c.avatar }));
     conn.on('data', msg => {
       if (msg.t === 'error') { done(reject, new Error(t('err.' + msg.code))); return; }
       if (msg.t === 'joined') { c.name = msg.name; c.retries = 0; done(resolve); }
@@ -1300,14 +1465,18 @@ function onHostMessage(msg) {
       break;
     case 'joined': case 'lobby':
       if (msg.mode) c.mode = msg.mode;
-      if (msg.names) c.lobby = msg.names;
+      if (msg.list) c.lobby = msg.list;
       if (['clientWait', 'home'].includes(ui.view) || msg.t === 'joined') go('clientWait');
       break;
     case 'question':
-      c.q = msg; c.answered = msg.answered ? (msg.choice ?? -1) : null; c.reveal = null; c.t0 = performance.now();
+      c.q = msg; c.answered = msg.answered ? (msg.skipped ? -2 : msg.choice ?? -1) : null; c.reveal = null; c.t0 = performance.now();
+      c.qs = { ord: msg.type === 'order' ? msg.options.map((_, k) => k) : null, act: msg.act || [], hide: msg.hide || [] }; c.pu = msg.pu || {};
       go('clientQuestion');
       clearInterval(c.timer);
       c.timer = setInterval(clientTick, 200);
+      break;
+    case 'pu_ok':
+      if (c.q && c.q.index === msg.q) { c.qs.act = msg.act; c.qs.hide = msg.hide; c.pu = msg.pu; if (msg.kind === 'skip') c.answered = -2; render(); clientTick(); }
       break;
     case 'title':
       clearInterval(c.timer); c.title = msg; go('clientTitle'); break;
@@ -1332,8 +1501,8 @@ function clientTick() {
 
 views.clientWait = () => `
   <div class="wait"><h2>${ic('check-circle')} ${t('wait.in', { name: esc(cli.name) })}</h2>
-    ${cli.mode === 'exam' ? `<p><span class="pill-exam">${ic('clipboard')} ${t('lobby.exam')}</span></p><p>${t('wait.exam')}</p>` : `<p>${cli.q ? t('wait.msg2') : t('wait.msg')}</p>`}
-    <div class="players">${cli.lobby.map(n => `<span class="chip">${esc(n)}</span>`).join('')}</div>
+    ${cli.mode === 'exam' ? `<p><span class="pill-exam">${ic('clipboard')} ${t('lobby.exam')}</span></p><p>${t('wait.exam')}</p><p class="muted">${t('exam.random')}</p>` : `<p>${cli.q ? t('wait.msg2') : t('wait.msg')}</p>`}
+    <div class="players">${cli.lobby.map(x => `<span class="chip">${av(x.avatar)}${esc(x.name)}</span>`).join('')}</div>
     <span class="spinner"></span></div>`;
 
 views.clientQuestion = () => {
@@ -1344,10 +1513,19 @@ views.clientQuestion = () => {
   <div class="tbar"><div id="tfill"></div></div>
   <div class="qtext">${esc(q.text)}</div>
   ${q.image ? `<img class="qimg" src="${esc(q.image)}" alt="">` : ''}
-  ${answerButtons(q, { interactive: true, selected: answered ? c.answered : undefined })}
-  ${answered ? `<p class="center-note">${ic('check-circle')} ${t('q.sent')}</p>` : ''}`;
+  ${liveAnswers(q, c.qs, { answered, interactive: true, selected: c.answered, pu: c.pu })}
+  ${answered ? `<p class="center-note">${c.answered === -2 ? `${ic('skip')} ${t('pu.skipped')}` : `${ic('check-circle')} ${t('q.sent')}`}</p>` : ''}`;
 };
 
+const curQs = () => game ? game.hostQs : cli.qs;
+function clientPu(kind) { const c = cli; if (c && c.q && c.answered === null) safeSend(c.conn, { t: 'powerup', q: c.q.index, kind }); }
+function clientOrderSubmit() {
+  const c = cli;
+  if (!c || !c.q || c.answered !== null) return;
+  c.answered = -1;
+  safeSend(c.conn, { t: 'answer', q: c.q.index, order: c.qs.ord });
+  render(); clientTick();
+}
 function clientAnswer(choice) {
   const c = cli;
   if (!c || !c.q || c.answered !== null) return;
@@ -1358,17 +1536,24 @@ function clientAnswer(choice) {
 
 views.clientReveal = () => {
   const c = cli, r = c.reveal, q = c.q;
-  const cls = r.ok ? 'good' : r.answered ? 'bad' : 'neutral';
+  const h = resHead(r);
   const moved = r.prevRank && r.prevRank !== r.rank ? (r.rank < r.prevRank ? ` <span class="rank-up">${ic('up')}${r.prevRank - r.rank}</span>` : ` <span class="rank-down">${ic('down')}${r.rank - r.prevRank}</span>`) : '';
+  let body;
+  if (r.type === 'order') body = `<p class="muted center-note">${t('order.correct')}</p>${solvedHtml(r.correctOrder)}`;
+  else if (r.type === 'poll') {
+    const max = Math.max(1, ...r.dist);
+    body = `<h3>${t('poll.results')}</h3><div class="dist">${r.dist.map((n, j) => `<div class="b"><span>${n}</span><i style="background:var(--c${j});height:${Math.round(n / max * 100)}%"></i></div>`).join('')}</div>${answerButtons(q, { interactive: false })}`;
+  } else body = `<div class="qtext" style="font-size:1.1rem;border-top-color:var(--c${r.correct})"><span class="muted">${t('reveal.right')}</span> <span style="color:var(--c${r.correct})">${SHAPES[r.correct]} ${esc(q.options[r.correct])}</span></div>`;
   return `
   <div class="stage">
-    <div class="big-result ${cls}">
-      <h2>${ic(r.ok ? 'check-circle' : r.answered ? 'x-circle' : 'clock')} ${r.ok ? t('reveal.correct') : r.answered ? t('reveal.wrong') : t('reveal.timeout')}</h2>
+    <div class="big-result ${h.cls}">
+      <h2>${ic(h.icon)} ${h.text}</h2>
       ${r.ok ? `<div class="pts-big" data-count="${r.gained}" data-prefix="+" data-suffix="${esc(t('pts.unit'))}">+${r.gained}${t('pts.unit')}</div>` : ''}
       ${r.ok && r.bonus ? `<span class="pill">${t('reveal.bonus', { n: r.bonus })}</span>` : ''}
       ${r.streak >= 2 ? `<span class="pill">${ic('flame')} ${t('reveal.streak', { n: r.streak })}</span>` : ''}
+      ${r.saved ? `<span class="pill">${ic('shield')} ${t('pu.saved')}</span>` : ''}
     </div>
-    <div class="qtext" style="font-size:1.1rem;border-top-color:var(--c${r.correct})"><span class="muted">${t('reveal.right')}</span> <span style="color:var(--c${r.correct})">${SHAPES[r.correct]} ${esc(q.options[r.correct])}</span></div>
+    ${body}
     ${r.explanation ? `<div class="explain">${ic('lightbulb')}<div><b>${t('reveal.why')}</b><p>${esc(r.explanation)}</p></div></div>` : ''}
     <p class="rankline" style="margin-top:var(--s4)">${t('reveal.rank', { r: r.rank, moved, n: r.players })} · <span data-count="${r.score}" data-suffix=" ${esc(t('pts.short'))}">${r.score} ${t('pts.short')}</span></p>
     ${boardHtml(r.top, c.name)}
@@ -1493,7 +1678,8 @@ const actions = {
     if ((plays || mode === 'exam') && !name) { $('#host-err').textContent = t('setup.nameerr'); return; }
     const btn = $('#start-lobby'); btn.disabled = true; btn.textContent = t('setup.creating'); $('#host-err').textContent = '';
     try {
-      await createLobby(compactQuiz(ui.quizzes.find(q => q.id === ui.setupQuizId)), plays, name, mode);
+      const hav = $('#host-avatar').value; saveAvatar(hav.trim());
+      await createLobby(compactQuiz(ui.quizzes.find(q => q.id === ui.setupQuizId)), plays, name, mode, hav);
       go('hostLobby');
     } catch (e) {
       btn.disabled = false; btn.textContent = t('setup.create');
@@ -1507,9 +1693,21 @@ const actions = {
   kick(el) {
     const p = game.players.get(el.dataset.id); if (!p) return;
     if (p.conn) { safeSend(p.conn, { t: 'kicked' }); setTimeout(() => { try { p.conn && p.conn.close(); } catch { } }, 200); }
-    game.players.delete(p.id); broadcast({ t: 'lobby', names: lobbyNames() }); render();
+    game.players.delete(p.id); broadcast({ t: 'lobby', list: lobbyList() }); render();
   },
-  'start-game'() { if (game.mode === 'exam') startExam(); else startQuestion(0); },
+  'start-game'() {
+    if (game.mode === 'exam') return startExam();
+    game.players.forEach(p => { p.pu = Object.fromEntries([...game.puOn].map(k => [k, 1])); });
+    startQuestion(0);
+  },
+  'av-pick'(el) { const i = document.getElementById(el.dataset.for); if (i) { i.value = el.dataset.v; i.focus(); } },
+  pu(el) { if (game) hostPu(el.dataset.k); else clientPu(el.dataset.k); },
+  'ord-up'(el) { moveItem(curQs().ord, +el.dataset.k, -1); render(); clientTick(); },
+  'ord-down'(el) { moveItem(curQs().ord, +el.dataset.k, 1); render(); clientTick(); },
+  'ord-submit'() { if (game) hostOrderSubmit(); else clientOrderSubmit(); },
+  'xord-up'(el) { examMove(+el.dataset.k, -1); },
+  'xord-down'(el) { examMove(+el.dataset.k, 1); },
+  'xord-ok'() { examOrderOk(); },
   'exam-solo'() { examSolo(); },
   'exam-finish'() { if (confirm(t('exam.finish.confirm'))) game.players.forEach(p => { if (!p.isHost && p.ex && !p.ex.done) finishExamFor(p, 'host'); }); },
   'exam-csv'(el) { const p = game.players.get(el.dataset.id); if (p && p.ex && p.ex.report) downloadReportCsv([p.ex.report], false); },
@@ -1551,6 +1749,7 @@ document.addEventListener('input', e => {
   else if (b === 'q.opt') q.options[+t.dataset.j] = t.value;
 });
 document.addEventListener('change', e => {
+  if (e.target.dataset.pu && game) { game.puOn[e.target.checked ? 'add' : 'delete'](e.target.dataset.pu); return; }
   const el = e.target, b = el.dataset.bind;
   if (b && ui.editing) {
     const q = ui.editing.questions[+el.dataset.i];
@@ -1598,17 +1797,18 @@ document.addEventListener('input', e => { if (e.target.id === 'join-code') e.tar
 document.addEventListener('submit', async e => {
   if (e.target.dataset.form !== 'join') return;
   e.preventDefault();
-  const code = $('#join-code').value.trim().toUpperCase(), name = $('#join-name').value.trim();
+  const code = $('#join-code').value.trim().toUpperCase(), name = $('#join-name').value.trim(), avatar = $('#join-avatar').value.trim();
   const err = $('#join-err');
   if (code.length !== 5) return void (err.textContent = t('join.codelen'));
   if (!name) return void (err.textContent = t('join.needname'));
   err.textContent = ''; const btn = e.target.querySelector('button[type=submit]'); btn.disabled = true; btn.textContent = t('join.busy');
   try {
-    await joinGame(code, name);
+    saveAvatar(avatar);
+    await joinGame(code, name, avatar);
   } catch (ex) {
     const msg = ex.type === 'peer-unavailable' ? t('err.nogame') : ex.message;
     leaveGame(); ui.joinError = msg; render();
-    $('#join-code').value = code; $('#join-name').value = name;
+    $('#join-code').value = code; $('#join-name').value = name; $('#join-avatar').value = avatar;
   }
 });
 
