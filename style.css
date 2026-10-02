@@ -116,3 +116,9 @@ button.ans{cursor:pointer}button.ans:active{transform:translateY(3px);box-shadow
 .wait{color:#fff;text-align:center;padding:60px 0}
 .wait h2{font-size:2rem}
 .link{word-break:break-all;font-size:.85rem;opacity:.85}
+.title-screen{padding:12vh 0;animation:fadein .4s forwards;opacity:0}
+.title-big{font-size:clamp(2rem,7vw,4.5rem);line-height:1.1;margin:0 0 .3em;text-shadow:0 4px 0 rgba(0,0,0,.25)}
+.title-sub{font-size:clamp(1.1rem,3vw,1.8rem);opacity:.9;margin:0}
+.title-fill{height:100%;background:#ffd02f;width:100%;animation:shrink linear forwards}
+@keyframes shrink{to{width:0}}
+.sep-card{background:#f1ecff;border-style:dashed}

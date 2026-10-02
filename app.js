@@ -43,6 +43,11 @@ const store = {
 };
 
 const blankQuestion = () => ({ id: uid(), text: '', image: null, options: ['', '', '', ''], correct: 0, time: 20, points: 'standard' });
+const blankSeparator = () => ({ id: uid(), type: 'title', text: '', subtitle: '', time: 4 });
+const isTitle = q => q.type === 'title';
+const realCount = quiz => quiz.questions.filter(q => !isTitle(q)).length;
+/** Número (1..N) de la pregunta en la posición i, sin contar separadores. */
+const qNumber = (quiz, i) => quiz.questions.slice(0, i + 1).filter(q => !isTitle(q)).length;
 const blankQuiz = () => ({ id: uid(), title: '', description: '', questions: [blankQuestion()] });
 
 /** Valida y normaliza un cuestionario importado. Lanza Error con mensaje legible. */
@@ -51,6 +56,10 @@ function normalizeQuiz(raw) {
   if (!raw.questions.length) throw new Error('El cuestionario no tiene preguntas.');
   const questions = raw.questions.map((q, i) => {
     const n = i + 1;
+    if (q && q.type === 'title') {
+      if (typeof q.text !== 'string' || !q.text.trim()) throw new Error(`Elemento ${n}: el separador necesita un título ("text").`);
+      return { id: uid(), type: 'title', text: q.text.trim().slice(0, 120), subtitle: String(q.subtitle || '').trim().slice(0, 200), time: clamp(Math.round(Number(q.time)) || 4, 2, 30) };
+    }
     if (!q || typeof q.text !== 'string' || !q.text.trim()) throw new Error(`Pregunta ${n}: falta el texto ("text").`);
     if (!Array.isArray(q.options)) throw new Error(`Pregunta ${n}: faltan las opciones ("options").`);
     const options = q.options.slice(0, 4).map(o => String(o ?? ''));
@@ -63,13 +72,14 @@ function normalizeQuiz(raw) {
     while (options.length < 2) options.push('');
     return { id: uid(), text: q.text.trim(), image, options, correct, time, points };
   });
+  if (!questions.some(q => !isTitle(q))) throw new Error('El cuestionario no tiene preguntas (solo separadores).');
   return { id: uid(), title: String(raw.title || 'Cuestionario importado').slice(0, 120), description: String(raw.description || '').slice(0, 500), questions };
 }
 
 function exportable(quiz) {
   return {
     format: 'questionari', version: 1, title: quiz.title, description: quiz.description,
-    questions: quiz.questions.map(q => ({
+    questions: quiz.questions.map(q => isTitle(q) ? { type: 'title', text: q.text, subtitle: q.subtitle || '', time: q.time } : ({
       text: q.text, image: q.image || null,
       options: q.options.filter((o, i) => o.trim() || i === q.correct),
       correct: q.correct, time: q.time, points: q.points,
@@ -163,7 +173,7 @@ views.library = () => `
     ${ui.quizzes.length ? ui.quizzes.map(q => `
       <div class="quiz-item">
         <div><h3>${esc(q.title || 'Sin título')}</h3>
-          <span class="muted">${q.questions.length} pregunta${q.questions.length === 1 ? '' : 's'}${q.questions.some(x => x.image) ? ' · 🖼️ con imágenes' : ''}${q.description ? ' · ' + esc(q.description) : ''}</span></div>
+          <span class="muted">${realCount(q)} pregunta${realCount(q) === 1 ? '' : 's'}${q.questions.some(x => x.image) ? ' · 🖼️ con imágenes' : ''}${q.description ? ' · ' + esc(q.description) : ''}</span></div>
         <div class="row">
           <button class="btn ok" data-act="play" data-id="${q.id}">▶ Jugar</button>
           <button class="btn sec" data-act="edit" data-id="${q.id}">✏️ Editar</button>
@@ -189,20 +199,29 @@ views.editor = () => {
     <label class="f">Título</label><input type="text" data-bind="title" maxlength="120" value="${esc(z.title)}">
     <label class="f">Descripción (opcional)</label><input type="text" data-bind="description" maxlength="500" value="${esc(z.description)}">
   </div>
-  ${z.questions.map((q, i) => editorQuestion(q, i, z.questions.length)).join('')}
-  <div class="row"><button class="btn big" data-act="add-q">＋ Añadir pregunta</button><button class="btn big ok" data-act="save">💾 Guardar</button></div>`;
+  ${z.questions.map((q, i) => editorQuestion(q, i, z.questions.length, z)).join('')}
+  <div class="row"><button class="btn big" data-act="add-q">＋ Añadir pregunta</button><button class="btn big sec" data-act="add-sep">➖ Añadir separador</button><button class="btn big ok" data-act="save">💾 Guardar</button></div>`;
 };
 
-function editorQuestion(q, i, total) {
-  return `
-  <div class="q-card" data-qi="${i}">
-    <div class="q-head"><strong>Pregunta ${i + 1}</strong>
+function editorQuestion(q, i, total, quiz) {
+  const head = (label) => `<div class="q-head"><strong>${label}</strong>
       <div class="row">
         <button class="btn sm sec" data-act="q-up" data-i="${i}" ${i === 0 ? 'disabled' : ''}>↑</button>
         <button class="btn sm sec" data-act="q-down" data-i="${i}" ${i === total - 1 ? 'disabled' : ''}>↓</button>
         <button class="btn sm sec" data-act="q-dup" data-i="${i}">⧉</button>
         <button class="btn sm danger" data-act="q-del" data-i="${i}" ${total === 1 ? 'disabled' : ''}>🗑</button>
-      </div></div>
+      </div></div>`;
+  if (isTitle(q)) return `
+  <div class="q-card sep-card" data-qi="${i}">
+    ${head('➖ Separador (pantalla de título, sin respuestas)')}
+    <label class="f">Título</label><input type="text" data-bind="q.text" data-i="${i}" maxlength="120" value="${esc(q.text)}" placeholder="Ej.: Ronda 2 · Geografía">
+    <label class="f">Subtítulo (opcional)</label><input type="text" data-bind="q.subtitle" data-i="${i}" maxlength="200" value="${esc(q.subtitle || '')}">
+    <label class="f">Duración en pantalla</label><select data-bind="q.time" data-i="${i}">
+      ${[2, 3, 4, 5, 6, 8, 10, 15, 20, 30].map(t => `<option value="${t}" ${q.time === t ? 'selected' : ''}>${t} s</option>`).join('')}</select>
+  </div>`;
+  return `
+  <div class="q-card" data-qi="${i}">
+    ${head('Pregunta ' + qNumber(quiz, i))}
     <textarea data-bind="q.text" data-i="${i}" placeholder="Escribe la pregunta…" maxlength="300">${esc(q.text)}</textarea>
     <label class="f">Imagen (opcional)</label>
     ${q.image ? `<img class="img-prev" src="${esc(q.image)}" alt="">
@@ -236,11 +255,13 @@ function validateEditing() {
   const z = ui.editing;
   if (!z.title.trim()) return 'Ponle un título al cuestionario.';
   for (let i = 0; i < z.questions.length; i++) {
-    const q = z.questions[i], n = i + 1;
+    const q = z.questions[i], n = isTitle(q) ? `${i + 1} (separador)` : qNumber(z, i);
+    if (isTitle(q)) { if (!q.text.trim()) return `Elemento ${n}: escribe el título del separador.`; continue; }
     if (!q.text.trim()) return `Pregunta ${n}: escribe el texto.`;
     if (q.options.filter(o => o.trim()).length < 2) return `Pregunta ${n}: rellena al menos 2 opciones.`;
     if (!q.options[q.correct].trim()) return `Pregunta ${n}: la opción correcta está vacía.`;
   }
+  if (!realCount(z)) return 'Añade al menos una pregunta (no solo separadores).';
   return '';
 }
 
@@ -248,6 +269,7 @@ function validateEditing() {
 function compactQuiz(quiz) {
   const copy = JSON.parse(JSON.stringify(quiz));
   copy.questions.forEach(q => {
+    if (isTitle(q)) { q.text = q.text.trim(); q.subtitle = (q.subtitle || '').trim(); return; }
     const keep = q.options.map((o, j) => ({ o: o.trim(), j })).filter(x => x.o);
     q.correct = keep.findIndex(x => x.j === q.correct);
     q.options = keep.map(x => x.o);
@@ -275,7 +297,7 @@ views.hostSetup = () => {
   return `
   <div class="card" style="max-width:560px;margin:20px auto">
     <h2>▶ ${esc(quiz.title)}</h2>
-    <p class="muted">${quiz.questions.length} preguntas</p>
+    <p class="muted">${realCount(quiz)} preguntas</p>
     <label style="display:flex;gap:10px;align-items:center;font-weight:600;margin:12px 0">
       <input type="checkbox" id="host-plays" style="width:20px;height:20px" checked> Yo también quiero participar como jugador
     </label>
@@ -371,6 +393,7 @@ function onClientClose(conn) {
 function resendState(p) {
   const g = game;
   if (g.state === 'lobby') safeSend(p.conn, { t: 'lobby', names: lobbyNames() });
+  else if (g.state === 'title') safeSend(p.conn, titlePayload(g.qIndex, Math.max(0, (g.deadline - Date.now()) / 1000)));
   else if (g.state === 'question') {
     safeSend(p.conn, { ...questionPayload(g.qIndex), time: Math.max(0, (g.deadline - Date.now()) / 1000), answered: g.answers.has(p.id), choice: g.answers.get(p.id)?.choice });
   } else if (g.state === 'reveal' && p.last) safeSend(p.conn, revealPayload(p));
@@ -379,11 +402,12 @@ function resendState(p) {
 
 function questionPayload(i) {
   const q = game.quiz.questions[i];
-  return { t: 'question', index: i, total: game.quiz.questions.length, text: q.text, image: q.image, options: q.options, time: q.time, points: q.points };
+  return { t: 'question', index: i, num: qNumber(game.quiz, i), total: realCount(game.quiz), text: q.text, image: q.image, options: q.options, time: q.time, points: q.points };
 }
 
 function startQuestion(i) {
   const g = game, q = g.quiz.questions[i];
+  if (isTitle(q)) return startTitle(i);
   g.qIndex = i; g.state = 'question'; g.answers = new Map();
   g.qStart = Date.now(); g.deadline = g.qStart + q.time * 1000;
   g.players.forEach(p => { p.prevRank = p.rank; p.last = null; });
@@ -391,6 +415,20 @@ function startQuestion(i) {
   go('hostQuestion');
   clearInterval(g.timer);
   g.timer = setInterval(hostTick, 200);
+}
+
+function titlePayload(i, remaining) {
+  const q = game.quiz.questions[i];
+  return { t: 'title', text: q.text, subtitle: q.subtitle || '', time: q.time, remaining };
+}
+
+function startTitle(i) {
+  const g = game, q = g.quiz.questions[i];
+  g.qIndex = i; g.state = 'title'; g.deadline = Date.now() + q.time * 1000;
+  clearInterval(g.timer); clearTimeout(g.timer);
+  broadcast(titlePayload(i, q.time));
+  go('hostTitle');
+  g.timer = setTimeout(() => { if (game === g && g.state === 'title') nextStep(); }, q.time * 1000);
 }
 
 function hostTick() {
@@ -476,9 +514,11 @@ function endQuestion() {
   go('hostReveal');
 }
 
+const noMoreQuestions = () => !game.quiz.questions.slice(game.qIndex + 1).some(q => !isTitle(q));
+
 function revealPayload(p) {
   const g = game;
-  return { t: 'reveal', index: g.qIndex, correct: g.quiz.questions[g.qIndex].correct, ...p.last, score: p.score, streak: p.streak, rank: p.rank, prevRank: p.prevRank, players: g.players.size, top: g.top, dist: g.dist, last: g.qIndex === g.quiz.questions.length - 1 };
+  return { t: 'reveal', index: g.qIndex, correct: g.quiz.questions[g.qIndex].correct, ...p.last, score: p.score, streak: p.streak, rank: p.rank, prevRank: p.prevRank, players: g.players.size, top: g.top, dist: g.dist, last: noMoreQuestions() };
 }
 
 function computeAwards() {
@@ -496,7 +536,7 @@ function computeAwards() {
 
 function finalPayload(p) {
   const g = game;
-  return { t: 'final', ranking: g.results.map(r => ({ name: r.name, score: r.score, correct: r.correct })), awards: g.awards, you: { name: p.name, rank: p.rank, score: p.score, correct: p.correct, total: g.quiz.questions.length, maxStreak: p.maxStreak }, total: g.quiz.questions.length };
+  return { t: 'final', ranking: g.results.map(r => ({ name: r.name, score: r.score, correct: r.correct })), awards: g.awards, you: { name: p.name, rank: p.rank, score: p.score, correct: p.correct, total: realCount(g.quiz), maxStreak: p.maxStreak }, total: realCount(g.quiz) };
 }
 
 function finishGame() {
@@ -532,7 +572,7 @@ views.hostLobby = () => {
     <div class="row" style="justify-content:center;margin-top:8px"><button class="btn sm sec" data-act="copy-link">📋 Copiar enlace</button></div>
     <h3 style="margin-top:20px">${g.quiz.title ? esc(g.quiz.title) : ''}</h3>
     <div class="players">${humans ? [...g.players.values()].map(p => `<span class="chip">${esc(p.name)}${p.isHost ? ' 👑' : `<button data-act="kick" data-id="${esc(p.id)}" title="Expulsar">✕</button>`}</span>`).join('') : '<span class="spinner"></span>&nbsp; Esperando jugadores…'}</div>
-    <p>${humans} jugador${humans === 1 ? '' : 'es'} · ${g.quiz.questions.length} preguntas${g.hostPlays ? '' : ' · el host no participa'}</p>
+    <p>${humans} jugador${humans === 1 ? '' : 'es'} · ${realCount(g.quiz)} preguntas${g.hostPlays ? '' : ' · el host no participa'}</p>
     <div class="row" style="justify-content:center">
       <button class="btn big ok" data-act="start-game" ${humans ? '' : 'disabled'}>▶ Empezar</button>
       <button class="btn big ghost" style="color:#fff;border-color:rgba(255,255,255,.4)" data-act="end-game">Cancelar</button>
@@ -551,11 +591,22 @@ function answerButtons(q, { interactive, selected, correct }) {
   }).join('')}</div>`;
 }
 
+function titleHtml(q, skip) {
+  return `<div class="stage title-screen">
+    <h1 class="title-big">${esc(q.text)}</h1>
+    ${q.subtitle ? `<p class="title-sub">${esc(q.subtitle)}</p>` : ''}
+    <div class="tbar" style="max-width:420px;margin:28px auto 0"><div class="title-fill" style="animation-duration:${Math.max(0.1, q.remaining ?? q.time)}s"></div></div>
+    ${skip ? '<div class="row" style="justify-content:center;margin-top:20px"><button class="btn sec" data-act="skip-title">Saltar ⏭</button></div>' : ''}
+  </div>`;
+}
+views.hostTitle = () => titleHtml({ ...game.quiz.questions[game.qIndex], remaining: Math.max(0, (game.deadline - Date.now()) / 1000) }, true);
+views.clientTitle = () => titleHtml(cli.title, false);
+
 views.hostQuestion = () => {
   const g = game, q = g.quiz.questions[g.qIndex];
   const mine = g.answers.get('host');
   return `
-  <div class="qbar"><span>Pregunta ${g.qIndex + 1} / ${g.quiz.questions.length}${q.points === 'double' ? ' · ×2 puntos' : q.points === 'none' ? ' · sin puntos' : ''}</span>
+  <div class="qbar"><span>Pregunta ${qNumber(g.quiz, g.qIndex)} / ${realCount(g.quiz)}${q.points === 'double' ? ' · ×2 puntos' : q.points === 'none' ? ' · sin puntos' : ''}</span>
     <span id="acount">${g.answers.size} / ${connectedHumans().length} respuestas</span>
     <div class="timer" id="tnum">${q.time}</div></div>
   <div class="tbar"><div id="tfill"></div></div>
@@ -568,7 +619,7 @@ views.hostQuestion = () => {
 views.hostReveal = () => {
   const g = game, q = g.quiz.questions[g.qIndex], me = g.players.get('host');
   const max = Math.max(1, ...g.dist);
-  const isLast = g.qIndex === g.quiz.questions.length - 1;
+  const isLast = noMoreQuestions();
   return `
   <div class="stage">
     <div class="qtext">${esc(q.text)}</div>
@@ -604,7 +655,7 @@ views.hostFinal = () => {
     ${podiumHtml(g.results)}
     ${awardsHtml(g.awards)}
     <h3>Resultados completos</h3>
-    <div class="board">${g.results.map((r, i) => `<div class="r"><span class="pos">${i + 1}</span><span class="nm">${esc(r.name)}</span><span class="muted">${r.correct}/${g.quiz.questions.length} ✔</span><span class="sc">${r.score} pts</span></div>`).join('')}</div>
+    <div class="board">${g.results.map((r, i) => `<div class="r"><span class="pos">${i + 1}</span><span class="nm">${esc(r.name)}</span><span class="muted">${r.correct}/${realCount(g.quiz)} ✔</span><span class="sc">${r.score} pts</span></div>`).join('')}</div>
     <div class="row" style="justify-content:center;margin-top:18px">
       <button class="btn sec" data-act="csv">📊 Descargar resultados (CSV)</button>
       <button class="btn big" data-act="end-game">Volver al inicio</button>
@@ -615,7 +666,7 @@ views.hostFinal = () => {
 function resultsCsv() {
   const g = game, q = (s) => `"${String(s).replace(/"/g, '""')}"`;
   const rows = [['Puesto', 'Nombre', 'Puntos', 'Aciertos', 'Preguntas', 'Racha máxima'].join(',')];
-  g.results.forEach((r, i) => rows.push([i + 1, q(r.name), r.score, r.correct, g.quiz.questions.length, r.maxStreak].join(',')));
+  g.results.forEach((r, i) => rows.push([i + 1, q(r.name), r.score, r.correct, realCount(g.quiz), r.maxStreak].join(',')));
   return rows.join('\n');
 }
 
@@ -692,6 +743,8 @@ function onHostMessage(msg) {
       clearInterval(c.timer);
       c.timer = setInterval(clientTick, 200);
       break;
+    case 'title':
+      clearInterval(c.timer); c.title = msg; go('clientTitle'); break;
     case 'reveal':
       clearInterval(c.timer); c.reveal = msg; go('clientReveal'); break;
     case 'final':
@@ -721,7 +774,7 @@ views.clientQuestion = () => {
   const c = cli, q = c.q;
   const answered = c.answered !== null;
   return `
-  <div class="qbar"><span>Pregunta ${q.index + 1} / ${q.total}${q.points === 'double' ? ' · ×2' : q.points === 'none' ? ' · sin puntos' : ''}</span><div class="timer" id="tnum">${Math.ceil(q.time)}</div></div>
+  <div class="qbar"><span>Pregunta ${q.num} / ${q.total}${q.points === 'double' ? ' · ×2' : q.points === 'none' ? ' · sin puntos' : ''}</span><div class="timer" id="tnum">${Math.ceil(q.time)}</div></div>
   <div class="tbar"><div id="tfill"></div></div>
   <div class="qtext">${esc(q.text)}</div>
   ${q.image ? `<img class="qimg" src="${esc(q.image)}" alt="">` : ''}
@@ -822,6 +875,7 @@ const actions = {
   },
   /* editor */
   'add-q'() { ui.editing.questions.push(blankQuestion()); render(); },
+  'add-sep'() { ui.editing.questions.push(blankSeparator()); render(); },
   'q-del'(el) { ui.editing.questions.splice(+el.dataset.i, 1); render(); },
   'q-dup'(el) { const i = +el.dataset.i, c = JSON.parse(JSON.stringify(ui.editing.questions[i])); c.id = uid(); ui.editing.questions.splice(i + 1, 0, c); render(); },
   'q-up'(el) { const i = +el.dataset.i, a = ui.editing.questions; [a[i - 1], a[i]] = [a[i], a[i - 1]]; render(); },
@@ -877,6 +931,7 @@ const actions = {
   },
   'start-game'() { startQuestion(0); },
   skip() { endQuestion(); },
+  'skip-title'() { clearTimeout(game.timer); nextStep(); },
   next() { nextStep(); },
   answer(el) { const j = +el.dataset.j; if (game) hostAnswer(j); else clientAnswer(j); },
   'end-game'() {
@@ -901,6 +956,7 @@ document.addEventListener('input', e => {
   if (b === 'title' || b === 'description') return void (z[b] = t.value);
   const q = z.questions[+t.dataset.i];
   if (b === 'q.text') q.text = t.value;
+  else if (b === 'q.subtitle') q.subtitle = t.value;
   else if (b === 'q.opt') q.options[+t.dataset.j] = t.value;
 });
 document.addEventListener('change', e => {

@@ -9,6 +9,7 @@ Juego de preguntas tipo Kahoot que se ejecuta **solo con archivos estáticos** (
 
 ## Funcionalidades
 - Crear/editar cuestionarios a mano (2–4 opciones, tiempo, puntos estándar/doble/sin puntos).
+- Separadores entre preguntas: pantalla de título (y subtítulo) de unos segundos, sin respuestas, que avanza sola.
 - Preguntas con imagen (subida desde el dispositivo, se reduce a 800 px, o URL).
 - Importar (archivo o pegando texto) y exportar cuestionarios en JSON. Las imágenes subidas viajan dentro del JSON.
 - Partida: el host crea una sala con un código de 5 letras; los jugadores entran con código + nombre (o con el enlace `?join=CODE`). El host decide si también juega.
@@ -25,7 +26,7 @@ Juego de preguntas tipo Kahoot que se ejecuta **solo con archivos estáticos** (
   ]
 }
 ```
-`image`: `null`, una URL `https://…` o un data-URL `data:image/…`. `points`: `standard` | `double` | `none`. Ver `examples/ejemplo.json`.
+`image`: `null`, una URL `https://…` o un data-URL `data:image/…`. `points`: `standard` | `double` | `none`. Para un separador: `{ "type": "title", "text": "Ronda 2", "subtitle": "opcional", "time": 4 }` (`time` en segundos, 2–30). Ver `examples/ejemplo.json`.
 
 ## Notas técnicas
 - Señalización con el servidor público de PeerJS; para uno propio edita `config.js`. En redes muy restrictivas (sin STUN/TURN) algunos jugadores podrían no conectar.
