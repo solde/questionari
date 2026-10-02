@@ -26,7 +26,7 @@ Juego de preguntas tipo Kahoot que se ejecuta **solo con archivos estáticos** (
   ]
 }
 ```
-`image`: `null`, una URL `https://…` o un data-URL `data:image/…`. `points`: `standard` | `double` | `none`. Para un separador: `{ "type": "title", "text": "Ronda 2", "subtitle": "opcional", "time": 4 }` (`time` en segundos, 2–30). Ver `examples/ejemplo.json`.
+`image`: `null`, una URL `https://…` o un data-URL `data:image/…`. `points`: `standard` | `double` | `none`. Para un separador: `{ "type": "title", "text": "Ronda 2", "subtitle": "opcional", "time": 4 }` (`time` en segundos, 2–30). Ver `examples/ejemplo.json` y `examples/tanatopraxia-uc1605-3.json` (132 preguntas con imágenes).
 
 ## Notas técnicas
 - Señalización con el servidor público de PeerJS; para uno propio edita `config.js`. En redes muy restrictivas (sin STUN/TURN) algunos jugadores podrían no conectar.
