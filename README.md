@@ -16,6 +16,14 @@ Juego de preguntas tipo Kahoot que se ejecuta **solo con archivos estáticos** (
 - Gamificación: puntos por rapidez (500–1000), bonus por racha de aciertos, preguntas ×2, clasificación tras cada pregunta, podio animado, premios (🔥 Racha, ⚡ Rayo, 🎯 Francotirador) y CSV de resultados.
 - Reconexión automática de jugadores que pierdan la conexión.
 
+## Modo examen
+Al crear la sala se elige **Partida en directo** o **Examen**.
+- Cada alumno avanza a su ritmo: puede volver atrás, saltar de pregunta con el navegador numerado y corregir hasta entregar.
+- Duración del examen = suma de la duración de todas sus preguntas, con cuenta atrás; al agotarse se entrega solo lo respondido.
+- El host no participa: ve un panel con el progreso (respondidas, aciertos, estado) de cada alumno. Solo si está **solo en la sala** puede hacer el examen él mismo, con la vista de un alumno.
+- Al entregar, el alumno ve en pantalla **solo su informe** (nota, aciertos, errores, en blanco, tiempos y revisión pregunta a pregunta) y puede descargarlo en **CSV** (pregunta, respuesta dada, respuesta correcta, resultado, explicación y tiempo). El host puede descargar el CSV de cada alumno o uno con todos.
+- Las respuestas correctas y explicaciones no salen del host hasta que el alumno entrega.
+
 ## Música
 Durante la partida suena música de concurso sintetizada en el navegador (sin archivos de audio). Cada jugador puede silenciarla con el botón de altavoz de la barra superior; se recuerda en ese dispositivo.
 

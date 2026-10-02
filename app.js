@@ -223,6 +223,14 @@ function sampleQuiz() {
 function effectiveTheme() {
   return document.documentElement.dataset.theme || (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
 }
+/** En la pantalla de preparación: el examen oculta "yo también juego" (el host solo podrá hacerlo si está solo en la sala). */
+function syncSetup() {
+  const exam = ($('input[name=mode]:checked') || {}).value === 'exam';
+  $('#host-plays-wrap').style.display = exam ? 'none' : 'flex';
+  $('#host-name-wrap').style.display = !exam && !$('#host-plays').checked ? 'none' : '';
+}
+document.addEventListener('change', e => { if (e.target.name === 'mode' || e.target.id === 'host-plays') syncSetup(); });
+
 function syncThemeIcon() { $('#theme-icon').setAttribute('href', effectiveTheme() === 'dark' ? '#i-sun' : '#i-moon'); }
 matchMedia('(prefers-color-scheme: dark)').addEventListener('change', syncThemeIcon);
 
@@ -248,7 +256,7 @@ window.addEventListener('scroll', () => $('#topbar').classList.toggle('scrolled'
 
 const inGame = () => !!(game || cli);
 function leaveGame() {
-  if (game) { clearInterval(game.timer); try { broadcast({ t: 'end' }); } catch { } try { game.peer.destroy(); } catch { } game = null; }
+  if (game) { clearInterval(game.timer); clearTimeout(game.examTimer); try { broadcast({ t: 'end' }); } catch { } try { game.peer.destroy(); } catch { } game = null; }
   if (cli) { cli.closing = true; clearInterval(cli.timer); try { cli.peer.destroy(); } catch { } cli = null; }
   $('#conn-badge').textContent = '';
   music.set('off');
@@ -439,7 +447,11 @@ views.hostSetup = () => {
   <div class="card" style="max-width:560px;margin:20px auto">
     <h2>${ic('play')} ${esc(quiz.title)}</h2>
     <p class="muted">${tn('lib.count', realCount(quiz))}</p>
-    <label style="display:flex;gap:10px;align-items:center;font-weight:600;margin:12px 0">
+    <fieldset class="mode-pick"><legend class="f">${t('mode.title')}</legend>
+      <label class="mode-card"><input type="radio" name="mode" value="live" checked><span><b>${ic('gamepad')} ${t('mode.live')}</b><small>${t('mode.live.d')}</small></span></label>
+      <label class="mode-card"><input type="radio" name="mode" value="exam"><span><b>${ic('clipboard')} ${t('mode.exam')}</b><small>${t('mode.exam.d')}</small></span></label>
+    </fieldset>
+    <label id="host-plays-wrap" style="display:flex;gap:10px;align-items:center;font-weight:600;margin:12px 0">
       <input type="checkbox" id="host-plays" style="width:20px;height:20px" checked> ${t('setup.plays')}
     </label>
     <div id="host-name-wrap"><label class="f" for="host-name">${t('setup.name')}</label>
@@ -449,7 +461,7 @@ views.hostSetup = () => {
   </div>`;
 };
 
-async function createLobby(quiz, hostPlays, hostName) {
+async function createLobby(quiz, hostPlays, hostName, mode = 'live') {
   let peer = null, code = null;
   for (let attempt = 0; attempt < 6; attempt++) {
     code = genCode();
@@ -468,10 +480,10 @@ async function createLobby(quiz, hostPlays, hostName) {
   if (!peer) throw new Error(t('err.lobby'));
 
   game = {
-    peer, code, quiz, hostPlays, state: 'lobby', qIndex: -1, qStart: 0, deadline: 0, timer: null,
+    peer, code, quiz, hostPlays, hostName: hostName || 'Host', mode, solo: null, state: 'lobby', qIndex: -1, qStart: 0, deadline: 0, timer: null,
     answers: new Map(), players: new Map(), results: null,
   };
-  if (hostPlays) game.players.set('host', newPlayer('host', hostName || 'Host', null, true));
+  if (hostPlays && mode === 'live') game.players.set('host', newPlayer('host', hostName || 'Host', null, true));
 
   peer.on('connection', conn => {
     conn.on('data', msg => onClientMessage(conn, msg));
@@ -498,6 +510,7 @@ function onClientMessage(conn, msg) {
   const p = [...game.players.values()].find(x => x.conn === conn);
   if (!p) return;
   if (msg.t === 'answer') registerAnswer(p, msg.q, msg.choice);
+  else if (typeof msg.t === 'string' && msg.t.startsWith('exam_')) examMsg(p, msg);
 }
 
 function handleJoin(conn, msg) {
@@ -507,7 +520,7 @@ function handleJoin(conn, msg) {
   const existing = game.players.get(id);
   if (existing && !existing.isHost) {
     existing.conn = conn; existing.connected = true;
-    safeSend(conn, { t: 'joined', name: existing.name });
+    safeSend(conn, { t: 'joined', name: existing.name, mode: game.mode });
     resendState(existing);
     refreshHostLive();
     return;
@@ -516,7 +529,7 @@ function handleJoin(conn, msg) {
   if ([...game.players.values()].some(p => p.name.toLowerCase() === name.toLowerCase())) return safeSend(conn, { t: 'error', code: 'name_taken' });
   if (game.players.size >= 100) return safeSend(conn, { t: 'error', code: 'full' });
   game.players.set(id, newPlayer(id, name, conn));
-  safeSend(conn, { t: 'joined', name });
+  safeSend(conn, { t: 'joined', name, mode: game.mode });
   broadcast({ t: 'lobby', names: lobbyNames() });
   refreshHostLive();
 }
@@ -539,6 +552,7 @@ function resendState(p) {
     safeSend(p.conn, { ...questionPayload(g.qIndex), time: Math.max(0, (g.deadline - Date.now()) / 1000), answered: g.answers.has(p.id), choice: g.answers.get(p.id)?.choice });
   } else if (g.state === 'reveal' && p.last) safeSend(p.conn, revealPayload(p));
   else if (g.state === 'final') safeSend(p.conn, finalPayload(p));
+  else if (g.state === 'exam' && p.ex) { if (p.ex.done) toPlayer(p, { t: 'exam_report', report: p.ex.report }); else examSendBegin(p); }
 }
 
 function questionPayload(i) {
@@ -604,6 +618,7 @@ function maybeCloseQuestion() {
 function refreshHostLive() {
   if (!game) return;
   if (ui.view === 'hostLobby') render();
+  else if (ui.view === 'hostExam') render();
   else if (ui.view === 'hostQuestion') {
     const a = $('#acount');
     if (a) a.textContent = t('qbar.answers', { n: game.answers.size, total: connectedHumans().length });
@@ -716,11 +731,15 @@ views.hostLobby = () => {
     <div class="code-big">${g.code}</div>
     <div class="link">${esc(url)}</div>
     <div class="row center" style="margin-top:8px"><button class="btn sm sec" data-act="copy-link">${ic('link')} ${t('lobby.copy')}</button></div>
+    ${g.mode === 'exam' ? `<p style="margin-top:12px"><span class="pill-exam">${ic('clipboard')} ${t('lobby.exam')} · ${t('exam.duration', { time: fmtClock(examTotalSecs(g.quiz)) })}</span></p>` : ''}
     <h3 style="margin-top:20px">${g.quiz.title ? esc(g.quiz.title) : ''}</h3>
     <div class="players">${humans ? [...g.players.values()].map(p => `<span class="chip">${esc(p.name)}${p.isHost ? ic('crown') : `<button data-act="kick" data-id="${esc(p.id)}" title="${esc(t('lobby.kick'))}" aria-label="${esc(t('lobby.kick.aria', { name: p.name }))}">${ic('x')}</button>`}</span>`).join('') : `<span class="spinner"></span>&nbsp; ${t('lobby.waiting')}`}</div>
-    <p>${tn('lobby.players', humans)} · ${tn('lib.count', realCount(g.quiz))}${g.hostPlays ? '' : ' · ' + t('lobby.nohost')}</p>
+    <p>${tn('lobby.players', humans)} · ${tn('lib.count', realCount(g.quiz))}${g.hostPlays || g.mode === 'exam' ? '' : ' · ' + t('lobby.nohost')}</p>
+    ${g.mode === 'exam' && !humans ? `<p class="muted" style="max-width:520px;margin:0 auto 12px">${t('lobby.solo.hint')}</p>` : ''}
     <div class="row" style="justify-content:center">
-      <button class="btn big ok" data-act="start-game" ${humans ? '' : 'disabled'}>${ic('play')} ${t('lobby.start')}</button>
+      ${g.mode === 'exam' && !humans
+        ? `<button class="btn big ok" data-act="exam-solo">${ic('clipboard')} ${t('lobby.solo')}</button>`
+        : `<button class="btn big ok" data-act="start-game" ${humans ? '' : 'disabled'}>${ic('play')} ${g.mode === 'exam' ? t('lobby.start.exam') : t('lobby.start')}</button>`}
       <button class="btn big ghost" data-act="end-game">${t('common.cancel')}</button>
     </div>
   </div>`;
@@ -819,6 +838,258 @@ function resultsCsv() {
   return rows.join('\n');
 }
 
+/* ───────────── MODO EXAMEN ─────────────
+ * Cada alumno avanza a su ritmo y puede ir atrás, saltar y corregir hasta entregar. El host guarda las respuestas correctas
+ * y no las envía hasta la entrega; si está solo en la sala, puede hacer el examen con la misma vista que un alumno. */
+/** Duración del examen = suma de la duración de todas sus preguntas (en segundos). */
+const examTotalSecs = quiz => quiz.questions.reduce((s, q) => s + (isTitle(q) ? 0 : q.time), 0);
+const fmtClock = sec => { sec = Math.max(0, Math.ceil(sec)); const h = Math.floor(sec / 3600), m = Math.floor(sec % 3600 / 60), s = sec % 60; return (h ? h + ':' + String(m).padStart(2, '0') : m) + ':' + String(s).padStart(2, '0'); };
+const examKinds = () => game.quiz.questions.map(q => isTitle(q) ? 't' : 'q');
+const newExam = () => ({ idx: 0, answers: [], times: [], enteredAt: 0, done: false, report: null, startedAt: Date.now(), finishedAt: 0 });
+const examAllDone = () => !!game && game.mode === 'exam' && game.state === 'exam' && [...game.players.values()].every(p => p.ex && p.ex.done);
+
+/** Entrega un mensaje a un jugador; el host en solitario lo recibe en local. */
+function toPlayer(p, msg) { if (p.isHost) examReceive(game.solo, msg); else safeSend(p.conn, msg); }
+
+function examItemPayload(i) {
+  const q = game.quiz.questions[i];
+  return isTitle(q)
+    ? { t: 'exam_item', i, kind: 't', text: q.text, subtitle: q.subtitle || '' }
+    : { t: 'exam_item', i, kind: 'q', n: qNumber(game.quiz, i), total: realCount(game.quiz), text: q.text, image: q.image, options: q.options };
+}
+function examSendBegin(p) {
+  const e = p.ex, len = game.quiz.questions.length;
+  e.enteredAt = Date.now();
+  toPlayer(p, { t: 'exam_begin', total: examTotalSecs(game.quiz), remaining: Math.max(0, (game.examDeadline - Date.now()) / 1000), kinds: examKinds(), answers: Array.from({ length: len }, (_, i) => Number.isInteger(e.answers[i]) ? e.answers[i] : null), idx: e.idx, nq: realCount(game.quiz) });
+  toPlayer(p, examItemPayload(e.idx));
+}
+function startExam() {
+  const g = game;
+  g.state = 'exam';
+  const secs = examTotalSecs(g.quiz);
+  g.examDeadline = Date.now() + secs * 1000;
+  clearTimeout(g.examTimer);
+  g.examTimer = setTimeout(() => { if (game === g && g.state === 'exam') g.players.forEach(p => finishExamFor(p, 'time')); }, secs * 1000);
+  g.players.forEach(p => { p.ex = newExam(); if (p.isHost || p.conn) examSendBegin(p); });
+  if (!g.solo) go('hostExam');
+}
+/** El host, solo en la sala, hace el examen con la vista de un alumno. */
+function examSolo() {
+  const g = game;
+  if (g.players.size) return;
+  g.hostPlays = true;
+  g.players.set('host', newPlayer('host', g.hostName, null, true));
+  g.solo = { kinds: [], answers: [], items: {}, idx: 0, nq: 0, report: null };
+  startExam();
+}
+function examLeaveItem(e) {
+  if (e.enteredAt) { e.times[e.idx] = (e.times[e.idx] || 0) + Date.now() - e.enteredAt; e.enteredAt = 0; }
+}
+/** Mensajes de un alumno (por red) o del host en solitario (en local). */
+function examMsg(p, msg) {
+  const g = game, e = p.ex;
+  if (!g || g.state !== 'exam' || !e || e.done) return;
+  const items = g.quiz.questions;
+  if (msg.t === 'exam_answer') {
+    const q = items[msg.i];
+    if (!q || isTitle(q)) return;
+    if (msg.choice === null || (Number.isInteger(msg.choice) && msg.choice >= 0 && msg.choice < q.options.length)) e.answers[msg.i] = msg.choice;
+    refreshHostLive();
+  } else if (msg.t === 'exam_goto') {
+    if (!Number.isInteger(msg.i) || msg.i < 0 || msg.i >= items.length) return;
+    examLeaveItem(e); e.idx = msg.i; e.enteredAt = Date.now();
+    if (msg.need) toPlayer(p, examItemPayload(msg.i));
+    refreshHostLive();
+  } else if (msg.t === 'exam_submit') {
+    finishExamFor(p);
+  }
+}
+function buildReport(p) {
+  const g = game, e = p.ex, rows = [];
+  let correct = 0, wrong = 0, blank = 0, totalMs = 0;
+  g.quiz.questions.forEach((q, i) => {
+    if (isTitle(q)) return;
+    const ch = e.answers[i], has = Number.isInteger(ch), ok = has && ch === q.correct, ms = e.times[i] || 0;
+    totalMs += ms;
+    if (!has) blank++; else if (ok) correct++; else wrong++;
+    rows.push({ n: qNumber(g.quiz, i), text: q.text, yours: has ? q.options[ch] : '', right: q.options[q.correct], status: !has ? 'blank' : ok ? 'ok' : 'bad', explanation: q.explanation || '', ms });
+  });
+  const total = rows.length;
+  return { name: p.name, total, correct, wrong, blank, pct: Math.round(correct / total * 100), grade: +(correct / total * 10).toFixed(1), totalMs, avgMs: Math.round(totalMs / total), rows };
+}
+function finishExamFor(p, reason) {
+  const e = p.ex;
+  if (!e || e.done) return;
+  examLeaveItem(e);
+  e.done = true; e.finishedAt = Date.now(); e.report = buildReport(p);
+  if (p.isHost || p.conn) toPlayer(p, { t: 'exam_report', report: e.report, reason });
+  refreshHostLive();
+}
+
+/* ── lado alumno (red o host en solitario) ── */
+const exState = () => cli ? cli.exam : game.solo;
+function exSend(msg) { if (cli) safeSend(cli.conn, msg); else examMsg(game.players.get('host'), msg); }
+function examReceive(st, msg) {
+  if (msg.t === 'exam_begin') { st.deadline = performance.now() + msg.remaining * 1000; st.total = msg.total; st.kinds = msg.kinds; st.answers = msg.answers; st.idx = msg.idx; st.nq = msg.nq; st.items = {}; st.report = null; }
+  else if (msg.t === 'exam_item') { st.items[msg.i] = msg; st.idx = msg.i; go('clientExam'); }
+  else if (msg.t === 'exam_report') { st.report = msg.report; if (msg.reason === 'time') toast(t('exam.timeup')); go('clientReport'); }
+}
+function examPick(j) {
+  const st = exState(), i = st.idx;
+  if (!st || st.report || st.kinds[i] !== 'q') return;
+  st.answers[i] = st.answers[i] === j ? null : j;
+  exSend({ t: 'exam_answer', i, choice: st.answers[i] });
+  render();
+}
+function examNavigate(i) {
+  const st = exState();
+  if (!st || st.report || !Number.isInteger(i) || i < 0 || i >= st.kinds.length) return;
+  const cached = !!st.items[i];
+  exSend({ t: 'exam_goto', i, need: !cached });
+  if (cached) { st.idx = i; go('clientExam'); }
+}
+const examBlanks = st => st.kinds.reduce((n, k, i) => n + (k === 'q' && !Number.isInteger(st.answers[i]) ? 1 : 0), 0);
+function examSubmit() {
+  const st = exState(), blanks = examBlanks(st);
+  if (blanks && !confirm(t('exam.submit.confirm', { n: blanks }))) return;
+  exSend({ t: 'exam_submit' });
+}
+
+/** Cuenta atrás del examen (alumno y panel del host). */
+function examClock() {
+  const x = $('#xt');
+  if (x && ui.view === 'clientExam') {
+    const st = exState(), left = st && st.deadline ? (st.deadline - performance.now()) / 1000 : 0;
+    x.querySelector('span').textContent = fmtClock(left);
+    x.classList.toggle('urgent', left <= 60);
+  }
+  const hl = $('#xtl');
+  if (hl && game && game.examDeadline) hl.textContent = fmtClock((game.examDeadline - Date.now()) / 1000);
+}
+setInterval(examClock, 500);
+
+function examTop(st) {
+  const answered = st.kinds.reduce((n, k, i) => n + (k === 'q' && Number.isInteger(st.answers[i]) ? 1 : 0), 0);
+  const left = st.deadline ? (st.deadline - performance.now()) / 1000 : 0;
+  return `<div class="exam-top"><span class="chip-info">${t('exam.answered', { n: answered, total: st.nq })}</span>
+    <span class="chip-info xtimer ${left <= 60 ? 'urgent' : ''}" id="xt" title="${esc(t('exam.left'))}">${ic('clock')}<span>${fmtClock(left)}</span></span></div>`;
+}
+
+function examNav(st) {
+  const last = st.kinds.length - 1;
+  let qn = 0;
+  const chips = st.kinds.map((k, i) => k === 'q' ? (qn++, `<button class="qchip ${Number.isInteger(st.answers[i]) ? 'done' : ''} ${i === st.idx ? 'cur' : ''}" data-act="exam-go" data-i="${i}" aria-label="${esc(t('exam.jump', { n: qn }))}" ${i === st.idx ? 'aria-current="true"' : ''}>${qn}</button>`) : '').join('');
+  return `
+  <div class="exam-nav">
+    <div class="qchips">${chips}</div>
+    <div class="row between exam-btns">
+      <button class="btn sec" data-act="exam-prev" ${st.idx === 0 ? 'disabled' : ''}>${ic('back')} ${t('exam.prev')}</button>
+      <button class="btn sec" data-act="exam-next" ${st.idx === last ? 'disabled' : ''}>${t('exam.next')} ${ic('arrow', 'ic-arrow')}</button>
+    </div>
+    <div class="row center"><button class="btn big ok" data-act="exam-submit">${ic('check-circle')} ${t('exam.last')}</button></div>
+  </div>`;
+}
+
+views.clientExam = () => {
+  const st = exState(), it = st.items[st.idx];
+  if (!it) return `<div class="wait"><span class="spinner"></span></div>`;
+  if (it.kind === 't') return `${examTop(st)}<div class="stage title-screen" style="padding-block:clamp(24px,8vh,80px)"><h1 class="title-big">${esc(it.text)}</h1>${it.subtitle ? `<p class="title-sub">${esc(it.subtitle)}</p>` : ''}</div>${examNav(st)}`;
+  const sel = st.answers[st.idx];
+  return `
+  ${examTop(st)}
+  <div class="qbar"><span>${t('qbar.q', { n: it.n, total: it.total })}</span></div>
+  <div class="qtext">${esc(it.text)}</div>
+  ${it.image ? `<img class="qimg" src="${esc(it.image)}" alt="">` : ''}
+  <div class="answers">${it.options.map((o, j) => `<button class="ans c${j} ${sel === j ? 'sel' : ''}" data-act="exam-pick" data-j="${j}" aria-pressed="${sel === j}"><span class="shape">${SHAPES[j]}</span>${esc(o)}</button>`).join('')}</div>
+  ${examNav(st)}`;
+};
+
+const fmtMs = ms => { const s = Math.round(ms / 1000); return s < 60 ? `${s} ${t('unit.s')}` : `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`; };
+views.clientReport = () => {
+  const r = exState().report;
+  const icon = { ok: 'check-circle', bad: 'x-circle', blank: 'help' };
+  const stat = (label, val, cls = '') => `<div class="stat ${cls}"><b>${val}</b><span>${label}</span></div>`;
+  return `
+  <div class="stage">
+    <h1 class="grad-text">${ic('clipboard')} ${t('rep.title')}</h1>
+    <p class="rankline">${esc(r.name)}</p>
+    <div class="stat-grid">
+      ${stat(t('rep.grade'), `${r.grade} <small>/ 10</small>`, 'big')}
+      ${stat(t('rep.pct'), r.pct + '%')}
+      ${stat(t('rep.correct'), r.correct, 'good')}
+      ${stat(t('rep.wrong'), r.wrong, 'bad')}
+      ${stat(t('rep.blank'), r.blank)}
+      ${stat(t('rep.time'), fmtMs(r.totalMs))}
+      ${stat(t('rep.avg'), fmtMs(r.avgMs))}
+    </div>
+    <p class="muted" style="margin-top:12px">${t('rep.private')}</p>
+    <div class="row center" style="margin:16px 0">
+      <button class="btn big" data-act="exam-csv-me">${ic('chart')} ${t('rep.csv')}</button>
+      <button class="btn ghost" data-act="${cli ? 'home' : 'end-game'}">${ic('back')} ${t('final.leave')}</button>
+    </div>
+    <h3 style="margin-top:24px">${t('rep.review')}</h3>
+    <div class="review">${r.rows.map(x => `
+      <details class="rev ${x.status}"><summary>${ic(icon[x.status])}<span class="rn">${x.n}.</span><span class="rt">${esc(x.text)}</span></summary>
+        <dl><dt>${t('rep.yours')}</dt><dd>${x.yours ? esc(x.yours) : '—'}</dd>
+        <dt>${t('rep.right')}</dt><dd>${esc(x.right)}</dd>
+        ${x.explanation ? `<dt>${t('reveal.why')}</dt><dd>${esc(x.explanation)}</dd>` : ''}</dl></details>`).join('')}</div>
+  </div>`;
+};
+
+/* ── CSV: una fila por pregunta (respuesta dada, respuesta correcta y explicación) ── */
+function csvCell(v) {
+  let s = String(v ?? '');
+  if (/^[=+\-@\t\r]/.test(s)) s = "'" + s;       // evita que Excel interprete el texto como fórmula
+  return `"${s.replace(/"/g, '""')}"`;
+}
+function downloadReportCsv(reports, withStudent) {
+  if (!reports.length) return;
+  const statusText = { ok: t('rep.res.ok'), bad: t('rep.res.bad'), blank: t('rep.res.blank') };
+  const head = [...(withStudent ? ['csv.student'] : []), 'csv.qn', 'csv.question', 'csv.yours', 'csv.right', 'csv.result', 'csv.expl', 'csv.secs'].map(k => csvCell(t(k)));
+  const lines = [head.join(',')];
+  reports.forEach(r => r.rows.forEach(x => lines.push([...(withStudent ? [r.name] : []), x.n, x.text, x.yours, x.right, statusText[x.status], x.explanation, (x.ms / 1000).toFixed(1)].map(csvCell).join(','))));
+  const name = withStudent ? `exam-${game ? game.code : 'all'}-all.csv` : `exam-${slug(reports[0].name)}.csv`;
+  download(name, '﻿' + lines.join('\r\n'), 'text/csv;charset=utf-8');
+}
+
+/* ── panel del host ── */
+views.hostExam = () => {
+  const g = game, nq = realCount(g.quiz);
+  const studs = [...g.players.values()].filter(p => !p.isHost && p.ex);
+  const done = studs.filter(p => p.ex.done), all = examAllDone();
+  const avg = done.length ? (done.reduce((s, p) => s + p.ex.report.grade, 0) / done.length).toFixed(1) : '—';
+  const rows = studs.map(p => {
+    const e = p.ex, ans = g.quiz.questions.reduce((n, q, i) => n + (!isTitle(q) && Number.isInteger(e.answers[i]) ? 1 : 0), 0);
+    const ok = g.quiz.questions.reduce((n, q, i) => n + (!isTitle(q) && e.answers[i] === q.correct ? 1 : 0), 0);
+    const st = e.done ? 'done' : p.connected ? 'going' : 'off';
+    return `<div class="erow"><span class="en">${esc(p.name)}</span>
+      <span class="ep"><span class="prog"><i style="width:${Math.round(ans / nq * 100)}%"></i></span><small>${ans} / ${nq}</small></span>
+      <span class="es">${e.done ? `<b>${e.report.grade}</b> <small>/ 10</small>` : `${ok}`}</span>
+      <span class="est st-${st}">${t('exam.st.' + st)}</span>
+      <span class="ea">${e.done ? `<button class="btn sm sec" data-act="exam-csv" data-id="${esc(p.id)}">${ic('chart')} ${t('exam.csv.one')}</button>` : ''}</span></div>`;
+  }).join('');
+  return `
+  <div class="stage">
+    <h1>${ic('clipboard')} ${t('exam.dash')}</h1>
+    <h3 class="muted">${esc(g.quiz.title)}</h3>
+    <div class="stat-grid" style="max-width:640px;margin:16px auto">
+      <div class="stat"><b>${done.length} / ${studs.length}</b><span>${t('exam.finished')}</span></div>
+      <div class="stat big"><b>${avg}</b><span>${t('exam.avg')}</span></div>
+      <div class="stat"><b id="xtl">${fmtClock((g.examDeadline - Date.now()) / 1000)}</b><span>${t('exam.left')} · ${t('exam.duration', { time: fmtClock(examTotalSecs(g.quiz)) })}</span></div>
+    </div>
+    ${all ? `<p class="center-note">${ic('check-circle')} ${t('exam.alldone')}</p>` : ''}
+    <div class="exam-table">
+      <div class="erow ehead"><span>${t('exam.col.student')}</span><span>${t('exam.col.progress')}</span><span>${t('exam.col.score')}</span><span>${t('exam.col.status')}</span><span></span></div>
+      ${rows}
+    </div>
+    <div class="row center" style="margin-top:20px">
+      ${all ? '' : `<button class="btn sec" data-act="exam-finish">${ic('skip')} ${t('exam.finish')}</button>`}
+      <button class="btn" data-act="exam-csv-all" ${done.length ? '' : 'disabled'}>${ic('chart')} ${t('exam.csv.all')}</button>
+      <button class="btn ghost" data-act="end-game">${ic('back')} ${t('final.leave')}</button>
+    </div>
+  </div>`;
+};
+
 /* ───────────── CLIENTE ───────────── */
 function getPlayerId(code) {
   const key = 'questionari.pid.' + code;
@@ -882,7 +1153,13 @@ async function tryReconnect() {
 function onHostMessage(msg) {
   const c = cli; if (!c) return;
   switch (msg.t) {
+    case 'exam_begin': case 'exam_item': case 'exam_report':
+      c.mode = 'exam'; c.exam = c.exam || { kinds: [], answers: [], items: {}, idx: 0, report: null };
+      examReceive(c.exam, msg);
+      if (msg.t === 'exam_report') { c.ended = true; clearInterval(c.timer); }
+      break;
     case 'joined': case 'lobby':
+      if (msg.mode) c.mode = msg.mode;
       if (msg.names) c.lobby = msg.names;
       if (['clientWait', 'home'].includes(ui.view) || msg.t === 'joined') go('clientWait');
       break;
@@ -901,7 +1178,7 @@ function onHostMessage(msg) {
     case 'kicked':
       c.ended = true; toast(t('err.kicked'), true); leaveGame(); go('home'); break;
     case 'end':
-      if (!c.final) { c.ended = true; toast(t('err.hostclosed'), true); leaveGame(); go('home'); } break;
+      if (!c.final && !(c.exam && c.exam.report)) { c.ended = true; toast(t('err.hostclosed'), true); leaveGame(); go('home'); } break;
   }
 }
 
@@ -915,7 +1192,7 @@ function clientTick() {
 
 views.clientWait = () => `
   <div class="wait"><h2>${ic('check-circle')} ${t('wait.in', { name: esc(cli.name) })}</h2>
-    <p>${cli.q ? t('wait.msg2') : t('wait.msg')}</p>
+    ${cli.mode === 'exam' ? `<p><span class="pill-exam">${ic('clipboard')} ${t('lobby.exam')}</span></p><p>${t('wait.exam')}</p>` : `<p>${cli.q ? t('wait.msg2') : t('wait.msg')}</p>`}
     <div class="players">${cli.lobby.map(n => `<span class="chip">${esc(n)}</span>`).join('')}</div>
     <span class="spinner"></span></div>`;
 
@@ -1006,7 +1283,7 @@ const actions = {
     syncThemeIcon();
   },
   home() {
-    if (inGame() && !(cli && cli.final) && ui.view !== 'hostFinal' && !confirm(t('leave.confirm'))) return;
+    if (inGame() && !(cli && cli.final) && ui.view !== 'hostFinal' && ui.view !== 'clientReport' && !confirm(t('leave.confirm'))) return;
     leaveGame(); ui.joinError = ''; history.replaceState(null, '', location.pathname); go('home');
   },
   library() { ui.editing = null; go('library'); },
@@ -1067,14 +1344,15 @@ const actions = {
   /* partida: host */
   play(el) {
     ui.setupQuizId = el.dataset.id; go('hostSetup');
-    $('#host-plays').addEventListener('change', e => { $('#host-name-wrap').style.display = e.target.checked ? '' : 'none'; });
+    syncSetup();
   },
   async 'start-lobby'() {
-    const plays = $('#host-plays').checked, name = $('#host-name').value.trim();
-    if (plays && !name) { $('#host-err').textContent = t('setup.nameerr'); return; }
+    const mode = $('input[name=mode]:checked').value;
+    const plays = mode === 'live' && $('#host-plays').checked, name = $('#host-name').value.trim();
+    if ((plays || mode === 'exam') && !name) { $('#host-err').textContent = t('setup.nameerr'); return; }
     const btn = $('#start-lobby'); btn.disabled = true; btn.textContent = t('setup.creating'); $('#host-err').textContent = '';
     try {
-      await createLobby(compactQuiz(ui.quizzes.find(q => q.id === ui.setupQuizId)), plays, name);
+      await createLobby(compactQuiz(ui.quizzes.find(q => q.id === ui.setupQuizId)), plays, name, mode);
       go('hostLobby');
     } catch (e) {
       btn.disabled = false; btn.textContent = t('setup.create');
@@ -1090,13 +1368,23 @@ const actions = {
     if (p.conn) { safeSend(p.conn, { t: 'kicked' }); setTimeout(() => { try { p.conn && p.conn.close(); } catch { } }, 200); }
     game.players.delete(p.id); broadcast({ t: 'lobby', names: lobbyNames() }); render();
   },
-  'start-game'() { startQuestion(0); },
+  'start-game'() { if (game.mode === 'exam') startExam(); else startQuestion(0); },
+  'exam-solo'() { examSolo(); },
+  'exam-finish'() { if (confirm(t('exam.finish.confirm'))) game.players.forEach(p => { if (!p.isHost && p.ex && !p.ex.done) finishExamFor(p, 'host'); }); },
+  'exam-csv'(el) { const p = game.players.get(el.dataset.id); if (p && p.ex && p.ex.report) downloadReportCsv([p.ex.report], false); },
+  'exam-csv-all'() { downloadReportCsv([...game.players.values()].filter(p => !p.isHost && p.ex && p.ex.report).map(p => p.ex.report), true); },
+  'exam-csv-me'() { const st = exState(); if (st && st.report) downloadReportCsv([st.report], false); },
+  'exam-pick'(el) { examPick(+el.dataset.j); },
+  'exam-go'(el) { examNavigate(+el.dataset.i); },
+  'exam-prev'() { examNavigate(exState().idx - 1); },
+  'exam-next'() { examNavigate(exState().idx + 1); },
+  'exam-submit'() { examSubmit(); },
   skip() { endQuestion(); },
   'skip-title'() { clearTimeout(game.timer); nextStep(); },
   next() { nextStep(); },
   answer(el) { const j = +el.dataset.j; if (game) hostAnswer(j); else clientAnswer(j); },
   'end-game'() {
-    if (game.state !== 'final' && !confirm(t('end.confirm'))) return;
+    if (game.state !== 'final' && !examAllDone() && !confirm(t('end.confirm'))) return;
     leaveGame(); go('library');
   },
   csv() { download('results-' + game.code + '.csv', '\ufeff' + resultsCsv(), 'text/csv;charset=utf-8'); },
